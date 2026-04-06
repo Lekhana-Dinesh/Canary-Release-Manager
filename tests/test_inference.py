@@ -8,9 +8,9 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from canary_release_env.inference import (
+from inference import (
     _env_settings,
     _parse_model_action,
     _run_task,
@@ -44,11 +44,11 @@ class FakeEnv:
         self.base_url = base_url
         self._observation = make_observation()
 
-    async def __aenter__(self):
-        return self
+    async def connect(self):
+        return None
 
-    async def __aexit__(self, exc_type, exc, tb):
-        return False
+    async def close(self):
+        return None
 
     async def reset(self, task: str):
         self._observation = make_observation(task_id=task)
@@ -78,6 +78,7 @@ class InferenceTests(unittest.TestCase):
                 "API_BASE_URL": "https://example.invalid/v1",
                 "MODEL_NAME": "test-model",
                 "HF_TOKEN": "secret",
+                "LOCAL_IMAGE_NAME": "local-image",
                 "ENV_BASE_URL": "http://should-be-ignored",
             },
             clear=True,
@@ -90,6 +91,7 @@ class InferenceTests(unittest.TestCase):
                 "api_base_url": "https://example.invalid/v1",
                 "model_name": "test-model",
                 "hf_token": "secret",
+                "local_image_name": "local-image",
             },
         )
 
@@ -110,24 +112,26 @@ class InferenceTests(unittest.TestCase):
 
     def test_run_task_emits_only_start_step_end_lines(self) -> None:
         stream = io.StringIO()
-        with patch("canary_release_env.inference.CanaryEnv", FakeEnv):
+        with patch("inference.CanaryEnv", FakeEnv):
             with redirect_stdout(stream):
                 result = asyncio.run(
                     _run_task(
                         client=None,
                         model_name="",
                         env_base_url="http://127.0.0.1:7860",
+                        local_image_name="",
                         task_id="easy",
                     )
                 )
 
         lines = [line.strip() for line in stream.getvalue().splitlines() if line.strip()]
         self.assertEqual(len(lines), 3)
-        self.assertTrue(lines[0].startswith("[START] "))
-        self.assertTrue(lines[1].startswith("[STEP] "))
-        self.assertTrue(lines[2].startswith("[END] "))
-        for line in lines:
-            self.assertRegex(line, r"^\[(START|STEP|END)\]")
+        self.assertEqual(lines[0], "[START] task=easy env=canary-release-env model=fallback")
+        self.assertEqual(
+            lines[1],
+            "[STEP] step=1 action=increase_10 reward=0.87 done=true error=null",
+        )
+        self.assertEqual(lines[2], "[END] success=true steps=1 score=0.8700 rewards=0.87")
         self.assertEqual(result["score"], 0.87)
         self.assertEqual(result["outcome"], "rollback")
 

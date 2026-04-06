@@ -194,7 +194,7 @@ EXPERT = Scenario(
     difficulty="expert",
     metric_fn=_expert_metrics,
     correct_rollback_at=0.35,
-    expected_baseline_score=(0.58, 0.65),
+    expected_baseline_score=(0.66, 0.69),
     expected_trained_score=(0.85, 0.92),
 )
 

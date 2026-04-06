@@ -7,15 +7,32 @@ import os
 import re
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 from typing import Any
 
 from openai import OpenAI
 
 if __package__ in (None, ""):
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    repo_root = Path(__file__).resolve().parent
+    parent = repo_root.parent
+    for path in (repo_root, parent):
+        candidate = str(path)
+        if candidate not in sys.path:
+            sys.path.insert(0, candidate)
 
-from canary_release_env import CanaryAction, CanaryEnv
-from canary_release_env.server.policies import safe_fallback_action
+    try:
+        from client import CanaryEnv
+        from models import CanaryAction
+        from server.canary_environment import CanaryEnvironment
+        from server.policies import safe_fallback_action
+    except ModuleNotFoundError:
+        from canary_release_env import CanaryAction, CanaryEnv
+        from canary_release_env.server.canary_environment import CanaryEnvironment
+        from canary_release_env.server.policies import safe_fallback_action
+else:
+    from canary_release_env import CanaryAction, CanaryEnv
+    from canary_release_env.server.canary_environment import CanaryEnvironment
+    from canary_release_env.server.policies import safe_fallback_action
 
 TASK_IDS = ("easy", "medium", "hard", "expert")
 DEFAULT_ENV_BASE_URL = "http://127.0.0.1:7860"
@@ -34,6 +51,10 @@ def _env_settings() -> dict[str, str]:
         "api_base_url": os.getenv("API_BASE_URL", "").strip(),
         "model_name": os.getenv("MODEL_NAME", "").strip(),
         "hf_token": os.getenv("HF_TOKEN", "").strip(),
+        "local_image_name": (
+            os.getenv("LOCAL_IMAGE_NAME", "").strip()
+            or os.getenv("IMAGE_NAME", "").strip()
+        ),
     }
 
 
@@ -117,7 +138,7 @@ def _parse_model_action(raw_content: str, observation) -> CanaryAction:
 
 
 def _build_client(settings: dict[str, str]) -> OpenAI | None:
-    if not all(settings.values()):
+    if not settings["api_base_url"] or not settings["hf_token"]:
         return None
     return OpenAI(
         base_url=settings["api_base_url"],
@@ -150,10 +171,73 @@ def _decide_action(
         return safe_fallback_action(observation)
 
 
+class _LocalEnvRunner:
+    def __init__(self) -> None:
+        self._env = CanaryEnvironment()
+
+    async def __aenter__(self) -> "_LocalEnvRunner":
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb) -> bool:
+        return False
+
+    async def reset(self, task: str):
+        return self._env.reset(task=task)
+
+    async def step(self, action: CanaryAction):
+        observation = self._env.step(action)
+        return SimpleNamespace(
+            observation=observation,
+            reward=observation.step_reward,
+            done=observation.is_done,
+        )
+
+    async def close(self) -> None:
+        return None
+
+
+def _make_remote_runner(env_base_url: str):
+    class _RemoteEnvRunner:
+        def __init__(self, base_url: str) -> None:
+            self._base_url = base_url
+            self._env: CanaryEnv | None = None
+
+        async def __aenter__(self):
+            self._env = CanaryEnv(base_url=self._base_url)
+            await self._env.connect()
+            return self._env
+
+        async def __aexit__(self, exc_type, exc, tb) -> bool:
+            if self._env is not None:
+                await self._env.close()
+            return False
+
+    return _RemoteEnvRunner(env_base_url)
+
+
+def _make_image_runner(local_image_name: str):
+    class _ImageEnvRunner:
+        def __init__(self, image: str) -> None:
+            self._image = image
+            self._env: CanaryEnv | None = None
+
+        async def __aenter__(self):
+            self._env = await CanaryEnv.from_docker_image(self._image)
+            return self._env
+
+        async def __aexit__(self, exc_type, exc, tb) -> bool:
+            if self._env is not None:
+                await self._env.close()
+            return False
+
+    return _ImageEnvRunner(local_image_name)
+
+
 async def _run_task(
     client: OpenAI | None,
     model_name: str,
-    env_base_url: str,
+    env_base_url: str | None,
+    local_image_name: str,
     task_id: str,
 ) -> dict[str, Any]:
     display_model = model_name if model_name else "fallback"
@@ -165,7 +249,14 @@ async def _run_task(
     final_traffic_pct = 0.0
 
     try:
-        async with CanaryEnv(base_url=env_base_url) as env:
+        if env_base_url:
+            env_runner = _make_remote_runner(env_base_url)
+        elif local_image_name:
+            env_runner = _make_image_runner(local_image_name)
+        else:
+            env_runner = _LocalEnvRunner()
+
+        async with env_runner as env:
             observation = await env.reset(task=task_id)
             step_num = 0
 
@@ -228,10 +319,10 @@ async def _run_task(
 
 
 async def main() -> list[dict[str, Any]]:
-    return await run(DEFAULT_ENV_BASE_URL)
+    return await run(None)
 
 
-async def run(env_base_url: str) -> list[dict[str, Any]]:
+async def run(env_base_url: str | None) -> list[dict[str, Any]]:
     settings = _env_settings()
     client = _build_client(settings)
     results = []
@@ -242,6 +333,7 @@ async def run(env_base_url: str) -> list[dict[str, Any]]:
                 client=client,
                 model_name=settings["model_name"],
                 env_base_url=env_base_url,
+                local_image_name=settings["local_image_name"],
                 task_id=task_id,
             )
         )
@@ -253,8 +345,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--env-url",
-        default=DEFAULT_ENV_BASE_URL,
-        help="Base URL for the environment. Defaults to the validator-safe local port.",
+        default=None,
+        help="Base URL for a running environment. If omitted, LOCAL_IMAGE_NAME is used when set; otherwise the script falls back to an in-process environment.",
     )
     args = parser.parse_args()
     asyncio.run(run(args.env_url))

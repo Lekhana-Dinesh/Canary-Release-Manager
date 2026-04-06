@@ -2,9 +2,9 @@ import sys
 import unittest
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from canary_release_env.generate_review_artifacts import (
+from generate_review_artifacts import (
     AMBIGUOUS_HARD_ACTIONS,
     ARTIFACT_FILENAMES,
     BAD_HARD_ACTIONS,
@@ -12,8 +12,8 @@ from canary_release_env.generate_review_artifacts import (
     _build_grader_request,
     benchmark_policies,
 )
-from canary_release_env.models import CanaryAction
-from canary_release_env.server.canary_environment import CanaryEnvironment
+from models import CanaryAction
+from server.canary_environment import CanaryEnvironment
 
 
 def _run_actions(task_id: str, actions: list[dict]) -> tuple[dict, dict]:

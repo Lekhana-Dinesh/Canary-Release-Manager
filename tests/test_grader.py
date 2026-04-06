@@ -2,12 +2,12 @@ import sys
 import unittest
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from canary_release_env.models import CanaryAction
-from canary_release_env.server.canary_environment import CanaryEnvironment
-from canary_release_env.server.grader import grade
-from canary_release_env.server.scenarios import SCENARIOS
+from models import CanaryAction
+from server.canary_environment import CanaryEnvironment
+from server.grader import grade
+from server.scenarios import SCENARIOS
 
 
 def make_action(action_type: str, reasoning: str, breach: bool) -> CanaryAction:

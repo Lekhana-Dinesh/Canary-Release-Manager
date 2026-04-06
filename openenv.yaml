@@ -83,11 +83,11 @@ score_contract:
     of normalized step scores, not a raw cumulative sum.
 
 baseline_scores:
-  easy: 0.95
-  medium: 0.838
-  hard: 0.8067
-  expert: 0.62
-  average: 0.8012
+  easy: 0.9367
+  medium: 0.83
+  hard: 0.8
+  expert: 0.6733
+  average: 0.81
   note: >
     Deterministic rule baseline from POST /baseline. It intentionally ignores
     warning windows, so medium and hard remain discriminative. The expert task

@@ -13,15 +13,37 @@ from pathlib import Path
 from typing import Any, Callable
 
 if __package__ in (None, ""):
-    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+    repo_root = Path(__file__).resolve().parent
+    parent = repo_root.parent
+    for path in (repo_root, parent):
+        candidate = str(path)
+        if candidate not in sys.path:
+            sys.path.insert(0, candidate)
 
-from canary_release_env.models import CanaryAction, CanaryObservation
-from canary_release_env.server.canary_environment import CanaryEnvironment
-from canary_release_env.server.policies import (
-    baseline_action,
-    observation_has_actual_breach,
-    safe_fallback_action,
-)
+    try:
+        from models import CanaryAction, CanaryObservation
+        from server.canary_environment import CanaryEnvironment
+        from server.policies import (
+            baseline_action,
+            observation_has_actual_breach,
+            safe_fallback_action,
+        )
+    except ModuleNotFoundError:
+        from canary_release_env.models import CanaryAction, CanaryObservation
+        from canary_release_env.server.canary_environment import CanaryEnvironment
+        from canary_release_env.server.policies import (
+            baseline_action,
+            observation_has_actual_breach,
+            safe_fallback_action,
+        )
+else:
+    from canary_release_env.models import CanaryAction, CanaryObservation
+    from canary_release_env.server.canary_environment import CanaryEnvironment
+    from canary_release_env.server.policies import (
+        baseline_action,
+        observation_has_actual_breach,
+        safe_fallback_action,
+    )
 
 ROOT = Path(__file__).resolve().parent
 DEFAULT_OUTPUT_DIR = ROOT / "review_artifacts"

@@ -6,7 +6,7 @@ colorTo: indigo
 sdk: docker
 app_port: 7860
 pinned: false
-license: mit
+license: apache-2.0
 ---
 # Canary Release Manager
 
@@ -298,7 +298,7 @@ python -m unittest discover -s tests -v
 Deterministic baseline:
 
 ```bash
-python baseline.py --url http://127.0.0.1:7860
+python baseline.py
 ```
 
 ## Docker
@@ -344,6 +344,7 @@ Environment variables read by the script:
 - `API_BASE_URL`
 - `MODEL_NAME`
 - `HF_TOKEN`
+- `LOCAL_IMAGE_NAME`
 
 Stdout contract:
 
@@ -355,13 +356,26 @@ There are no extra summary lines, no debug prints, and malformed model output fa
 
 That fallback policy is intentionally safer than `POST /baseline`. It is a runner safety net, not the benchmark baseline.
 
+Run in fully local mode with the in-process environment:
+
+```bash
+python inference.py
+```
+
+Run against a Docker image when the evaluator provides `LOCAL_IMAGE_NAME`:
+
+```bash
+export LOCAL_IMAGE_NAME="canary-release-env"
+python inference.py
+```
+
 Run against a locally served app on `7860`:
 
 ```bash
 export API_BASE_URL="https://your-openai-compatible-endpoint/v1"
 export MODEL_NAME="your-model"
 export HF_TOKEN="your-token"
-python inference.py
+python inference.py --env-url http://127.0.0.1:7860
 ```
 
 Run against the Docker host mapping:
@@ -433,11 +447,11 @@ Interpretation rules:
 
 Current deterministic `POST /baseline` output:
 
-- `easy`: `0.9500`
-- `medium`: `0.8380`
-- `hard`: `0.8067`
-- `expert`: `0.6200`
-- `average`: `0.8012`
+- `easy`: `0.9367`
+- `medium`: `0.8300`
+- `hard`: `0.8000`
+- `expert`: `0.6733`
+- `average`: `0.8100`
 
 Interpretation:
 
