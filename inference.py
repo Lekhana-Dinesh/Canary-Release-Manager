@@ -19,7 +19,7 @@ from canary_release_env.server.policies import safe_fallback_action
 
 TASK_IDS = ("easy", "medium", "hard")
 DEFAULT_ENV_BASE_URL = "http://127.0.0.1:7860"
-ALLOWED_TAGS = {"START", "STEP", "END"}
+ENV_BENCHMARK = "canary-release-env"
 ALLOWED_ACTION_TYPES = {
     "increase_5",
     "increase_10",
@@ -35,20 +35,6 @@ def _env_settings() -> dict[str, str]:
         "model_name": os.getenv("MODEL_NAME", "").strip(),
         "hf_token": os.getenv("HF_TOKEN", "").strip(),
     }
-
-
-def _emit_event(tag: str, **fields: Any) -> None:
-    if tag not in ALLOWED_TAGS:
-        raise ValueError(f"Unsupported log tag: {tag}")
-
-    ordered = " ".join(
-        f"{key}={json.dumps(value, separators=(',', ':'))}"
-        for key, value in fields.items()
-    )
-    line = f"[{tag}]"
-    if ordered:
-        line = f"{line} {ordered}"
-    print(line, flush=True)
 
 
 def _build_messages(observation) -> list[dict[str, str]]:
@@ -154,14 +140,14 @@ def _decide_action(
     client: OpenAI | None,
     model_name: str,
     observation,
-) -> tuple[CanaryAction, str]:
+) -> CanaryAction:
     if client is None or not model_name:
-        return safe_fallback_action(observation), "fallback"
+        return safe_fallback_action(observation)
 
     try:
-        return _model_action(client, model_name, observation), "model"
+        return _model_action(client, model_name, observation)
     except Exception:
-        return safe_fallback_action(observation), "fallback"
+        return safe_fallback_action(observation)
 
 
 async def _run_task(
@@ -170,58 +156,72 @@ async def _run_task(
     env_base_url: str,
     task_id: str,
 ) -> dict[str, Any]:
-    _emit_event("START", task=task_id, model=model_name or "fallback")
+    display_model = model_name if model_name else "fallback"
+    print(f"[START] task={task_id} env={ENV_BENCHMARK} model={display_model}", flush=True)
+
+    step_rewards: list[float] = []
+    success = False
+    steps_taken = 0
+    final_traffic_pct = 0.0
 
     try:
         async with CanaryEnv(base_url=env_base_url) as env:
             observation = await env.reset(task=task_id)
+            step_num = 0
 
             while not observation.is_done:
-                action, source = _decide_action(client, model_name, observation)
-                result = await env.step(action)
-                next_observation = result.observation
-                _emit_event(
-                    "STEP",
-                    task=task_id,
-                    observed_step=observation.step_number,
-                    traffic_pct=observation.traffic_pct,
-                    action=action.action_type,
-                    source=source,
-                    reward=round(float(result.reward or 0.0), 4),
-                    done=bool(result.done),
-                    assessment=next_observation.policy_assessment,
-                )
-                observation = next_observation
+                step_num += 1
+                action = _decide_action(client, model_name, observation)
+                error_val = "null"
+                reward = 0.0
+                done = False
 
-        outcome = "success" if observation.traffic_pct >= 1.0 else "rollback"
-        score = round(observation.cumulative_reward, 4)
-        _emit_event(
-            "END",
-            task=task_id,
-            score=score,
-            steps=observation.step_number,
-            outcome=outcome,
-        )
-        return {
-            "task_id": task_id,
-            "score": score,
-            "steps": observation.step_number,
-            "outcome": outcome,
-        }
+                try:
+                    result = await env.step(action)
+                    next_obs = result.observation
+                    reward = round(float(result.reward or 0.0), 2)
+                    done = bool(result.done)
+                    observation = next_obs
+                except Exception as exc:
+                    done = True
+                    error_val = str(exc).replace("\n", " ").strip()[:120]
+
+                step_rewards.append(reward)
+                done_str = "true" if done else "false"
+                print(
+                    f"[STEP] step={step_num} action={action.action_type} "
+                    f"reward={reward:.2f} done={done_str} error={error_val}",
+                    flush=True,
+                )
+
+                if done:
+                    break
+
+        success = True
+        steps_taken = step_num
+        final_traffic_pct = getattr(observation, "traffic_pct", 0.0)
+
     except Exception:
-        _emit_event(
-            "END",
-            task=task_id,
-            score=0.0,
-            steps=0,
-            outcome="error",
-        )
-        return {
-            "task_id": task_id,
-            "score": 0.0,
-            "steps": 0,
-            "outcome": "error",
-        }
+        success = False
+        steps_taken = len(step_rewards)
+
+    rewards_str = ",".join(f"{r:.2f}" for r in step_rewards)
+    success_str = "true" if success else "false"
+    print(f"[END] success={success_str} steps={steps_taken} rewards={rewards_str}", flush=True)
+
+    if not success:
+        outcome = "error"
+    elif final_traffic_pct >= 1.0:
+        outcome = "success"
+    else:
+        outcome = "rollback"
+
+    return {
+        "task_id": task_id,
+        "score": round(sum(step_rewards) / len(step_rewards), 4) if step_rewards else 0.0,
+        "steps": steps_taken,
+        "outcome": outcome,
+    }
 
 
 async def main() -> list[dict[str, Any]]:

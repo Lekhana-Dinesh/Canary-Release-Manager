@@ -56,23 +56,18 @@ It deliberately avoids live orchestration, persistent databases, RL infrastructu
 
 ## Workspace Layout
 
-The local workspace has a nested layout:
-
 ```text
-C:\Users\lekha\Downloads\canary_release_env
-\-- canary_release_env
-    +-- server
-    |   \-- Dockerfile
-    +-- tests
-    +-- baseline.py
-    +-- client.py
-    +-- inference.py
-    +-- models.py
-    +-- openenv.yaml
-    \-- README.md
+canary_release_env/          ← repo root (clone this)
+├── server/
+│   └── Dockerfile
+├── tests/
+├── baseline.py
+├── client.py
+├── inference.py
+├── models.py
+├── openenv.yaml
+└── README.md
 ```
-
-The inner `canary_release_env` directory is the actual environment root. Do not move the Dockerfile to the outer folder.
 
 ## What The Environment Simulates
 
@@ -247,26 +242,25 @@ That keeps transcript review aligned with the actual timing score instead of col
 
 From the environment root:
 
-```powershell
-cd C:\Users\lekha\Downloads\canary_release_env\canary_release_env
-python -m pip install -e .
+```bash
+pip install -e .
 ```
 
 Run the app directly:
 
-```powershell
-python server\app.py
+```bash
+python server/app.py
 ```
 
 Run with Uvicorn from the repository root:
 
-```powershell
+```bash
 uvicorn server.app:app --host 0.0.0.0 --port 7860
 ```
 
 After `pip install -e .`, the installed package entrypoint also works:
 
-```powershell
+```bash
 python -m canary_release_env.server.app
 ```
 
@@ -274,65 +268,45 @@ python -m canary_release_env.server.app
 
 Structural validation:
 
-```powershell
-cd C:\Users\lekha\Downloads\canary_release_env\canary_release_env
+```bash
 python -m openenv.cli validate .
 ```
 
 Runtime validation against a live local server:
 
-```powershell
-cd C:\Users\lekha\Downloads\canary_release_env\canary_release_env
+```bash
 python -m openenv.cli validate --url http://127.0.0.1:7860
 ```
 
 Offline tests:
 
-```powershell
-cd C:\Users\lekha\Downloads\canary_release_env\canary_release_env
+```bash
 python -m unittest discover -s tests -v
 ```
 
 Deterministic baseline:
 
-```powershell
-cd C:\Users\lekha\Downloads\canary_release_env\canary_release_env
+```bash
 python baseline.py --url http://127.0.0.1:7860
 ```
 
 ## Docker
 
-### Actual Working Build Command From The Outer Workspace
+Build from the repository root:
 
-```powershell
-cd C:\Users\lekha\Downloads\canary_release_env
-docker build -t canary-release-env -f .\canary_release_env\server\Dockerfile .\canary_release_env
+```bash
+docker build -t canary-release-env -f server/Dockerfile .
 ```
 
-### Equivalent Command If You Are Already In The Environment Root
+Run locally (container port 7860, mapped to host port 8001):
 
-```powershell
-cd C:\Users\lekha\Downloads\canary_release_env\canary_release_env
-docker build -t canary-release-env -f .\server\Dockerfile .
-```
-
-### Local Run Command
-
-The app listens on container port `7860`. For local external testing from the host, use:
-
-```powershell
+```bash
 docker run --rm -p 8001:7860 canary-release-env
-```
-
-If port `8001` is already in use locally, map any free host port instead:
-
-```powershell
-docker run --rm -p 8002:7860 canary-release-env
 ```
 
 Smoke test:
 
-```powershell
+```bash
 curl http://127.0.0.1:8001/health
 ```
 
@@ -372,17 +346,16 @@ That fallback policy is intentionally safer than `POST /baseline`. It is a runne
 
 Run against a locally served app on `7860`:
 
-```powershell
-cd C:\Users\lekha\Downloads\canary_release_env\canary_release_env
-$env:API_BASE_URL = "https://your-openai-compatible-endpoint/v1"
-$env:MODEL_NAME = "your-model"
-$env:HF_TOKEN = "your-token"
+```bash
+export API_BASE_URL="https://your-openai-compatible-endpoint/v1"
+export MODEL_NAME="your-model"
+export HF_TOKEN="your-token"
 python inference.py
 ```
 
-Run against the Docker host mapping if you want to smoke test from the host:
+Run against the Docker host mapping:
 
-```powershell
+```bash
 python inference.py --env-url http://127.0.0.1:8001
 ```
 
@@ -390,8 +363,7 @@ python inference.py --env-url http://127.0.0.1:8001
 
 Generate the full reviewer-facing evidence pack locally:
 
-```powershell
-cd C:\Users\lekha\Downloads\canary_release_env\canary_release_env
+```bash
 python generate_review_artifacts.py
 ```
 
