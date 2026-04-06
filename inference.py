@@ -17,7 +17,7 @@ if __package__ in (None, ""):
 from canary_release_env import CanaryAction, CanaryEnv
 from canary_release_env.server.policies import safe_fallback_action
 
-TASK_IDS = ("easy", "medium", "hard")
+TASK_IDS = ("easy", "medium", "hard", "expert")
 DEFAULT_ENV_BASE_URL = "http://127.0.0.1:7860"
 ENV_BENCHMARK = "canary-release-env"
 ALLOWED_ACTION_TYPES = {
@@ -193,7 +193,6 @@ async def _run_task(
                     f"reward={reward:.2f} done={done_str} error={error_val}",
                     flush=True,
                 )
-
                 if done:
                     break
 
@@ -206,8 +205,12 @@ async def _run_task(
         steps_taken = len(step_rewards)
 
     rewards_str = ",".join(f"{r:.2f}" for r in step_rewards)
+    avg_score = round(sum(step_rewards) / len(step_rewards), 4) if step_rewards else 0.0
     success_str = "true" if success else "false"
-    print(f"[END] success={success_str} steps={steps_taken} rewards={rewards_str}", flush=True)
+    print(
+        f"[END] success={success_str} steps={steps_taken} score={avg_score:.4f} rewards={rewards_str}",
+        flush=True,
+    )
 
     if not success:
         outcome = "error"
@@ -218,7 +221,7 @@ async def _run_task(
 
     return {
         "task_id": task_id,
-        "score": round(sum(step_rewards) / len(step_rewards), 4) if step_rewards else 0.0,
+        "score": avg_score,
         "steps": steps_taken,
         "outcome": outcome,
     }

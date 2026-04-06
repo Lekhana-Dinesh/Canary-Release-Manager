@@ -47,7 +47,7 @@ async def run_task(env: CanaryEnv, task_id: str) -> dict:
 async def main(base_url: str) -> None:
     all_scores: list[float] = []
     async with CanaryEnv(base_url=base_url) as env:
-        for task_id in ["easy", "medium", "hard"]:
+        for task_id in ["easy", "medium", "hard", "expert"]:
             result = await run_task(env, task_id)
             all_scores.append(result["score"])
             print(f"{task_id}: score={result['score']:.4f} steps={result['steps']} outcome={result['outcome']}")

@@ -2,9 +2,10 @@
 Canary Release Manager scenario definitions.
 
 Each task is deterministic and encodes a named rollout failure mode:
-  - easy: obvious immediate regression
+  - easy:   obvious immediate regression
   - medium: gradual degradation with a warning window before breach
-  - hard: shared infrastructure noise followed by a delayed canary-specific drift
+  - hard:   shared infrastructure noise followed by a delayed canary-specific drift
+  - expert: phantom monitoring alerts (false positives) followed by real differential drift
 """
 from __future__ import annotations
 
@@ -17,6 +18,8 @@ SLO_DIFFERENTIAL_P99_THRESHOLD = 50.0
 
 GLOBAL_NOISE_STEP = 3
 GLOBAL_NOISE_P99_DELTA = 42.0
+
+EXPERT_PHANTOM_ALERT_STEP = 2
 
 
 class MetricSnapshot(NamedTuple):
@@ -152,8 +155,53 @@ HARD = Scenario(
 )
 
 
+def _expert_metrics(traffic_pct: float, step_number: int) -> MetricSnapshot:
+    canary_error = 0.0018
+    canary_p99 = 146.0
+    stable_error = 0.001
+    stable_p99 = 140.0
+    alert_count = 0
+
+    if traffic_pct >= 0.10 and step_number == EXPERT_PHANTOM_ALERT_STEP:
+        # Phantom alert storm: monitoring fires 4 alerts but all metrics are healthy
+        alert_count = 4
+    elif traffic_pct >= 0.35:
+        # Real differential drift begins after phantom window clears
+        canary_error = 0.001 + max(0.0, (traffic_pct - 0.25) * 0.032)
+        canary_p99 = 140.0 + max(0.0, (traffic_pct - 0.25) * 560.0)
+        alert_count = int(
+            canary_error > SLO_ERROR_THRESHOLD
+            or (canary_p99 - stable_p99) > SLO_DIFFERENTIAL_P99_THRESHOLD
+        )
+
+    return MetricSnapshot(canary_error, canary_p99, stable_error, stable_p99, alert_count)
+
+
+EXPERT = Scenario(
+    id="expert",
+    name="Phantom Alert Storm",
+    failure_pattern=(
+        "A monitoring false-positive fires at step 2 (alert_count=4) while all metrics remain healthy. "
+        "After the phantom clears, a real canary-specific differential drift builds and breaches at 35% traffic."
+    ),
+    agent_instructions=(
+        "A new recommendation model is rolling out. "
+        "Rollback if canary_error_rate > 0.005 or canary_p99_ms - stable_p99_ms > 50. "
+        "Early in the rollout a burst of monitoring alerts will fire even though the canary metrics are healthy. "
+        "Do not rollback on alerts alone — verify the raw metrics before acting. "
+        "After the alert storm passes, watch for real canary-versus-stable differential drift."
+    ),
+    difficulty="expert",
+    metric_fn=_expert_metrics,
+    correct_rollback_at=0.35,
+    expected_baseline_score=(0.58, 0.65),
+    expected_trained_score=(0.85, 0.92),
+)
+
+
 SCENARIOS: dict[str, Scenario] = {
     "easy": EASY,
     "medium": MEDIUM,
     "hard": HARD,
+    "expert": EXPERT,
 }

@@ -31,6 +31,10 @@ tasks:
     name: "Headroom cliff with infrastructure noise"
     description: "Shared noise appears before a delayed canary-specific differential breach, forcing hold-vs-promotion judgment."
     difficulty: hard
+  - id: expert
+    name: "Phantom Alert Storm"
+    description: "Monitoring false-positives fire early while all metrics are healthy, then a real differential breach follows. Agents must distinguish alert_count from metric evidence."
+    difficulty: expert
 
 action_space:
   type: CanaryAction
@@ -82,7 +86,10 @@ baseline_scores:
   easy: 0.95
   medium: 0.838
   hard: 0.8067
-  average: 0.8649
+  expert: 0.62
+  average: 0.8012
   note: >
     Deterministic rule baseline from POST /baseline. It intentionally ignores
-    warning windows, so medium and hard remain discriminative.
+    warning windows, so medium and hard remain discriminative. The expert task
+    is scored lower because the baseline policy rolls back on alert_count > 0,
+    which is a false positive on the phantom alert step.

@@ -21,6 +21,7 @@ USE_PACKAGE_IMPORTS = (__package__ or "").startswith("canary_release_env.server"
 if USE_PACKAGE_IMPORTS:
     from canary_release_env.models import CanaryAction
     from canary_release_env.server.scenarios import (
+        EXPERT_PHANTOM_ALERT_STEP,
         GLOBAL_NOISE_STEP,
         SLO_DIFFERENTIAL_P99_THRESHOLD,
         SLO_ERROR_THRESHOLD,
@@ -30,6 +31,7 @@ if USE_PACKAGE_IMPORTS:
 else:
     from models import CanaryAction
     from server.scenarios import (
+        EXPERT_PHANTOM_ALERT_STEP,
         GLOBAL_NOISE_STEP,
         SLO_DIFFERENTIAL_P99_THRESHOLD,
         SLO_ERROR_THRESHOLD,
@@ -51,6 +53,7 @@ def _clamp(value: float, low: float = 0.0, high: float = 1.0) -> float:
 class ObservationAssessment:
     actual_breach: bool = False
     is_global_noise: bool = False
+    is_phantom_alert: bool = False
     is_warning_zone: bool = False
     warning_kind: str = ""
 
@@ -63,6 +66,7 @@ class GradeResult:
     reasoning_score: float = 0.0
     actual_breach: bool = False
     is_global_noise: bool = False
+    is_phantom_alert: bool = False
     policy_assessment: str = "ungraded"
     feedback_parts: list[str] = field(default_factory=list)
     explanation: str = ""
@@ -121,6 +125,25 @@ def _is_global_noise_event(
     )
 
 
+def _is_phantom_alert_event(
+    *,
+    scenario: Scenario,
+    step_number: int,
+    canary_error: float,
+    canary_p99: float,
+    stable_p99: float,
+    alert_count: int,
+) -> bool:
+    diff_p99 = canary_p99 - stable_p99
+    return (
+        scenario.id == "expert"
+        and step_number == EXPERT_PHANTOM_ALERT_STEP
+        and alert_count >= 2
+        and canary_error <= SLO_ERROR_THRESHOLD
+        and diff_p99 <= SLO_DIFFERENTIAL_P99_THRESHOLD
+    )
+
+
 def _actual_breach(
     *,
     scenario: Scenario,
@@ -131,11 +154,10 @@ def _actual_breach(
 ) -> bool:
     diff_p99 = canary_p99 - stable_p99
 
-    if scenario.id == "hard":
+    if scenario.id in ("hard", "expert"):
         return (
             canary_error > SLO_ERROR_THRESHOLD
             or diff_p99 > SLO_DIFFERENTIAL_P99_THRESHOLD
-            or alert_count > 0
         )
 
     return (
@@ -202,6 +224,18 @@ def _assess_observation(
     if is_global_noise:
         return ObservationAssessment(actual_breach=False, is_global_noise=True)
 
+    is_phantom = _is_phantom_alert_event(
+        scenario=scenario,
+        step_number=step_number,
+        canary_error=canary_error,
+        canary_p99=canary_p99,
+        stable_p99=stable_p99,
+        alert_count=alert_count,
+    )
+
+    if is_phantom:
+        return ObservationAssessment(actual_breach=False, is_phantom_alert=True)
+
     actual_breach = _actual_breach(
         scenario=scenario,
         canary_error=canary_error,
@@ -224,6 +258,7 @@ def _assess_observation(
     return ObservationAssessment(
         actual_breach=False,
         is_global_noise=False,
+        is_phantom_alert=False,
         is_warning_zone=is_warning_zone,
         warning_kind=warning_kind,
     )
@@ -295,6 +330,31 @@ def _reasoning_score(
         )
 
     return round(min(score, REASONING_WEIGHT), 4), feedback
+
+
+def _score_phantom_alert(result: GradeResult, action: CanaryAction) -> None:
+    if action.action_type.startswith("increase_") or action.action_type == "hold":
+        result.policy_assessment = "correct_phantom_ignore"
+        result.breach_detection_score = BREACH_DETECTION_WEIGHT
+        result.rollback_timing_score = ROLLBACK_TIMING_WEIGHT
+        result.promotion_safety_score = 0.22
+        if action.action_type == "hold":
+            result.feedback_parts.append(
+                "Correctly held traffic despite phantom alerts — metrics confirm no real breach."
+            )
+        else:
+            result.feedback_parts.append(
+                "Correctly promoted through phantom monitoring alerts by verifying the raw metrics."
+            )
+        return
+
+    result.policy_assessment = "false_positive_phantom_rollback"
+    result.breach_detection_score = 0.04
+    result.rollback_timing_score = 0.02
+    result.promotion_safety_score = 0.02
+    result.feedback_parts.append(
+        "Rolled back on alert_count alone without verifying that the raw metrics were healthy — this was a false positive."
+    )
 
 
 def _score_global_noise(result: GradeResult, action: CanaryAction) -> None:
@@ -565,8 +625,11 @@ def grade(
     )
     result.actual_breach = assessment.actual_breach
     result.is_global_noise = assessment.is_global_noise
+    result.is_phantom_alert = assessment.is_phantom_alert
 
-    if assessment.is_global_noise:
+    if assessment.is_phantom_alert:
+        _score_phantom_alert(result, action)
+    elif assessment.is_global_noise:
         _score_global_noise(result, action)
     elif assessment.is_warning_zone:
         _score_warning_zone(result, action, scenario)
@@ -581,7 +644,12 @@ def grade(
     )
     result.feedback_parts.append(reasoning_feedback)
 
-    if assessment.is_global_noise:
+    if assessment.is_phantom_alert:
+        result.explanation = (
+            f"Monitoring fired {alert_count} alert(s) but canary_error_rate={canary_error:.4f} "
+            f"and differential_p99_ms={diff_p99:.1f}ms were both within guardrails — this was a false-positive alert storm."
+        )
+    elif assessment.is_global_noise:
         result.explanation = (
             "Stable and canary latencies spiked together with no differential gap, so the observation matched shared infrastructure noise."
         )

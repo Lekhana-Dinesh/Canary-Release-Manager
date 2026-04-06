@@ -139,6 +139,16 @@ Named pattern: headroom cliff with infrastructure noise.
 - A thoughtful agent holds once more and then rolls back on the confirmed differential breach.
 - A shallow agent promotes through the warning window and rolls back late relative to the benchmark rollback point.
 
+### `expert`
+
+Named pattern: phantom alert storm.
+
+- Early in the rollout a monitoring burst fires `alert_count=4` while all raw metrics are healthy.
+- Rolling back on alerts alone is wrong — this is a false positive.
+- The correct action during the phantom step is `hold` or a cautious increase after verifying the metrics.
+- After the phantom clears, a real canary-specific differential drift builds toward breach at 35% traffic.
+- An agent that correctly ignores the phantom and then catches the real breach scores well. An agent that rollbacks on `alert_count` alone loses score on the phantom step.
+
 ## Reward And Score Semantics
 
 The public score contract is strict and normalized:
@@ -170,6 +180,7 @@ Important rules:
 
 - grading uses the pre-action observation
 - shared-noise steps are detected explicitly
+- phantom alert steps are detected and reward holding or promoting (not rollback)
 - medium warning states reward a cautious `increase_5`
 - hard warning states reward `hold`
 - actual breaches reward rollback
@@ -425,13 +436,15 @@ Current deterministic `POST /baseline` output:
 - `easy`: `0.9500`
 - `medium`: `0.8380`
 - `hard`: `0.8067`
-- `average`: `0.8649`
+- `expert`: `0.6200`
+- `average`: `0.8012`
 
 Interpretation:
 
 - easy is intentionally boring
 - medium penalizes overconfident promotion through a warning window
 - hard is lower because a shallow policy still misses the post-noise watch state
+- expert is the lowest because the baseline policy rolls back on `alert_count > 0`, which fires incorrectly on the phantom step
 
 ## Golden Path Examples
 
@@ -486,6 +499,24 @@ Bad:
 - `hold`
 - `increase_10`
 - `rollback`
+
+### Expert
+
+Good:
+
+- `increase_10`
+- `increase_10`
+- `hold` ← phantom alert fires here; do NOT rollback
+- `increase_10`
+- `increase_5`
+- `rollback`
+
+Bad:
+
+- `increase_10`
+- `increase_10`
+- `rollback` ← false positive; alert_count fired but metrics are healthy
+- (episode ends prematurely)
 
 ## Known Limitations
 
