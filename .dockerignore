@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+tests/
+*.pyc
+*.pyo
+*.log
+.pytest_cache/
+.tmp/
+.vendor_hatchling/
+dist_pkgcheck/
+review_artifacts/
+uv.lock
+README.md

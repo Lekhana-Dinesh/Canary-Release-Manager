@@ -1,0 +1,7 @@
+version = 1
+revision = 1
+requires-python = ">=3.10"
+
+# Offline placeholder lockfile for local validation in a network-restricted
+# environment. Regenerate with `uv lock` in a network-enabled environment
+# before publishing if you need a fully resolved dependency graph.

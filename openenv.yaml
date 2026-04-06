@@ -1,0 +1,88 @@
+spec_version: 1
+name: canary-release-env
+type: space
+runtime: fastapi
+app: server.app:app
+port: 7860
+version: "1.0.0"
+description: >
+  Production-minded OpenEnv benchmark for canary release decision-making.
+  The agent observes canary and stable metrics, then decides whether to
+  increase traffic, hold, or rollback.
+author: "Canary Release Manager Team"
+license: "Apache-2.0"
+tags:
+  - openenv
+  - mlops
+  - canary-release
+  - model-deployment
+  - evaluation
+
+tasks:
+  - id: easy
+    name: "Big Bang regression"
+    description: "Immediate regression visible once traffic crosses the first rollout threshold."
+    difficulty: easy
+  - id: medium
+    name: "Boiling frog regression"
+    description: "Gradual degradation with a warning window where a cautious probe is safer than a full promotion."
+    difficulty: medium
+  - id: hard
+    name: "Headroom cliff with infrastructure noise"
+    description: "Shared noise appears before a delayed canary-specific differential breach, forcing hold-vs-promotion judgment."
+    difficulty: hard
+
+action_space:
+  type: CanaryAction
+  fields:
+    - name: action_type
+      type: "Literal['increase_5','increase_10','increase_25','hold','rollback']"
+    - name: reasoning
+      type: str
+      min_length: 15
+    - name: slo_breach_detected
+      type: bool
+
+observation_space:
+  type: CanaryObservation
+  key_fields:
+    - name: traffic_pct
+      type: float
+      range: [0.0, 1.0]
+    - name: canary_error_rate
+      type: float
+    - name: canary_p99_ms
+      type: float
+    - name: stable_error_rate
+      type: float
+    - name: stable_p99_ms
+      type: float
+    - name: differential_p99_ms
+      type: float
+    - name: step_reward
+      type: float
+      range: [0.0, 1.0]
+    - name: cumulative_reward
+      type: float
+      range: [0.0, 1.0]
+
+score_contract:
+  per_step_score_range: [0.0, 1.0]
+  episode_score_range: [0.0, 1.0]
+  scoring_weights:
+    breach_detection_score: 0.35
+    rollback_timing_score: 0.25
+    promotion_safety_score: 0.30
+    reasoning_score: 0.10
+  note: >
+    Public scores are normalized. The final episode score is the running average
+    of normalized step scores, not a raw cumulative sum.
+
+baseline_scores:
+  easy: 0.95
+  medium: 0.838
+  hard: 0.8067
+  average: 0.8649
+  note: >
+    Deterministic rule baseline from POST /baseline. It intentionally ignores
+    warning windows, so medium and hard remain discriminative.

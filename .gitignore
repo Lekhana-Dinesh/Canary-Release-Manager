@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.log
+.uv-cache/
+.tmp/
+.vendor_hatchling/
+dist/
+build/
+*.egg-info/
+dist_pkgcheck/
+review_artifacts/
