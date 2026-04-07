@@ -1,0 +1,135 @@
+{
+  "baseline_summary": {
+    "agent_type": "rule-based-rollout-v3",
+    "average": 0.8447,
+    "normalized": true,
+    "scores": {
+      "easy": 0.9567,
+      "expert": 0.6967,
+      "hard": 0.8217,
+      "medium": 0.846,
+      "recovery": 0.9109,
+      "silent": 0.836
+    }
+  },
+  "health": {
+    "status": "healthy"
+  },
+  "policy_benchmark_hard_ordering": [
+    "cautious_policy",
+    "shallow_baseline",
+    "aggressive_policy"
+  ],
+  "policy_benchmark_recovery_ordering": [
+    "cautious_policy",
+    "shallow_baseline",
+    "aggressive_policy"
+  ],
+  "policy_benchmark_silent_ordering": [
+    "cautious_policy",
+    "shallow_baseline",
+    "aggressive_policy"
+  ],
+  "recommended_http_episode_sample": {
+    "create_episode": {
+      "done": false,
+      "episode_context": {
+        "defaulted_task": false,
+        "difficulty": "hard",
+        "failure_pattern": "Shared latency noise appears at 30% traffic, then the canary develops a sustained differential latency cliff.",
+        "requested_task": "hard",
+        "seed": 0,
+        "task_id": "hard",
+        "task_name": "Headroom cliff with infrastructure noise"
+      },
+      "episode_id": "artifact-generated",
+      "observation": {
+        "alert_count": 0,
+        "canary_error_rate": 0.001,
+        "canary_p99_ms": 144.0,
+        "consecutive_holds": 0,
+        "differential_error": 0.0,
+        "differential_p99_ms": 0.0,
+        "rollback_on_canary_p99_ms": null,
+        "rollback_on_differential_p99_ms": 50.0,
+        "rollback_on_error_rate": 0.005,
+        "stable_error_rate": 0.001,
+        "stable_p99_ms": 144.0,
+        "step_number": 0,
+        "traffic_pct": 0.0
+      }
+    },
+    "first_step": {
+      "done": false,
+      "evaluation": {
+        "actual_breach": false,
+        "episode_score": 0.97,
+        "explanation": "The observed state was healthy: canary_error_rate=0.0010, differential_p99_ms=0.0.",
+        "feedback": [
+          "Promoted by the standard 10% step while metrics were healthy.",
+          "Structured state_assessment matched the observed state (healthy). Structured breach flag was internally consistent and correct. Free-text reasoning is retained for transcript clarity only and does not affect the score."
+        ],
+        "feedback_text": "Action 'increase_10' assessed as 'healthy_standard_promotion'.\nScore: 0.970 | detection=0.35 timing=0.25 promotion=0.27 reasoning=0.10\nThe observed state was healthy: canary_error_rate=0.0010, differential_p99_ms=0.0.\nPromoted by the standard 10% step while metrics were healthy.\nStructured state_assessment matched the observed state (healthy). Structured breach flag was internally consistent and correct. Free-text reasoning is retained for transcript clarity only and does not affect the score.\nTraffic is now 10%. Steps remaining: 11.",
+        "policy_assessment": "healthy_standard_promotion",
+        "reward_breakdown": {
+          "breach_detection_score": 0.35,
+          "promotion_safety_score": 0.27,
+          "reasoning_score": 0.1,
+          "rollback_timing_score": 0.25
+        },
+        "step_reward": 0.97,
+        "summary": "Score: 0.970 | detection=0.35 timing=0.25 promotion=0.27 reasoning=0.10"
+      },
+      "observation": {
+        "alert_count": 0,
+        "canary_error_rate": 0.001,
+        "canary_p99_ms": 144.0,
+        "consecutive_holds": 0,
+        "differential_error": 0.0,
+        "differential_p99_ms": 0.0,
+        "rollback_on_canary_p99_ms": null,
+        "rollback_on_differential_p99_ms": 50.0,
+        "rollback_on_error_rate": 0.005,
+        "stable_error_rate": 0.001,
+        "stable_p99_ms": 144.0,
+        "step_number": 1,
+        "traffic_pct": 0.1
+      },
+      "reward": 0.97
+    }
+  },
+  "tasks_summary": {
+    "notes": {
+      "agent_observation_contract": "Telemetry, rollout progress, and guardrails only; evaluator feedback is kept in reviewer-only transcript and /episodes evaluation payloads.",
+      "canonical_stateful_interface": "WebSocket /ws via OpenEnv clients",
+      "completed_episode_retention": "128 recent completed episode results kept in memory",
+      "episode_score_definition": "running average of normalized step scores",
+      "invalid_task_behavior": "/episodes rejects unknown task ids with 422; standard /reset defaults unknown task ids to easy for validator safety",
+      "reasoning_contract": "The reasoning string is retained for transcript clarity and does not affect the score; public grading is fully determined by the structured diagnosis and action choice.",
+      "recommended_plain_http_flow": "POST /episodes -> POST /episodes/{episode_id}/step -> GET /episodes/{episode_id}/transcript",
+      "recommended_plain_http_interface": "/episodes",
+      "seeded_variants": "POST /reset and POST /episodes accept a deterministic OpenEnv seed; non-zero seeds vary event timing, alert counts, drift onset, recovery duration, and signal signatures within each scenario family.",
+      "standard_http_reset_step_state": "validator-safe but stateless across separate HTTP requests; use /episodes or /ws for actual stateful sessions",
+      "state_assessment_contract": "Public actions use coarse labels {healthy, warning, noise, phantom_alert, breach}; the grader internally distinguishes richer hidden rollout states for action-fit and timing."
+    },
+    "scoring_weights": {
+      "breach_detection_score": 0.35,
+      "promotion_safety_score": 0.3,
+      "reasoning_score": 0.1,
+      "rollback_timing_score": 0.25
+    },
+    "slo_thresholds": {
+      "differential_p99_ms": 50.0,
+      "error_rate": 0.005,
+      "p99_ms": 200.0
+    },
+    "task_ids": [
+      "easy",
+      "medium",
+      "hard",
+      "expert",
+      "recovery",
+      "silent"
+    ]
+  }
+}

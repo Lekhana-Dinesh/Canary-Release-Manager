@@ -25,14 +25,17 @@ if __package__ in (None, ""):
         from client import CanaryEnv
         from server.canary_environment import CanaryEnvironment
         from server.policies import baseline_action
+        from server.scenarios import PUBLIC_TASK_IDS
     except ModuleNotFoundError:
         from canary_release_env import CanaryEnv
         from canary_release_env.server.canary_environment import CanaryEnvironment
         from canary_release_env.server.policies import baseline_action
+        from canary_release_env.server.scenarios import PUBLIC_TASK_IDS
 else:
     from canary_release_env import CanaryEnv
     from canary_release_env.server.canary_environment import CanaryEnvironment
     from canary_release_env.server.policies import baseline_action
+    from canary_release_env.server.scenarios import PUBLIC_TASK_IDS
 
 
 LOCAL_IMAGE_NAME = os.getenv("LOCAL_IMAGE_NAME", "").strip() or os.getenv("IMAGE_NAME", "").strip()
@@ -48,15 +51,15 @@ class _LocalEnvRunner:
     async def __aexit__(self, exc_type, exc, tb) -> bool:
         return False
 
-    async def reset(self, task: str):
-        return self._env.reset(task=task)
+    async def reset(self, task: str, seed: int = 0):
+        return self._env.reset(task=task, seed=seed)
 
     async def step(self, action):
         observation = self._env.step(action)
         return SimpleNamespace(
             observation=observation,
-            reward=observation.step_reward,
-            done=observation.is_done,
+            reward=observation.reward,
+            done=observation.done,
         )
 
 
@@ -97,11 +100,12 @@ def _make_image_runner(local_image_name: str):
     return _ImageEnvRunner(local_image_name)
 
 
-async def run_task(env: CanaryEnv, task_id: str) -> dict:
-    observation = await env.reset(task=task_id)
+async def run_task(env: CanaryEnv, task_id: str, seed: int = 0) -> dict:
+    observation = await env.reset(task=task_id, seed=seed)
     actions: list[dict] = []
+    rewards: list[float] = []
 
-    while not observation.is_done:
+    while not observation.done:
         action = baseline_action(observation)
         actions.append(
             {
@@ -112,11 +116,13 @@ async def run_task(env: CanaryEnv, task_id: str) -> dict:
         )
 
         result = await env.step(action)
+        rewards.append(float(result.reward or 0.0))
         observation = result.observation
 
     return {
         "task_id": task_id,
-        "score": observation.cumulative_reward,
+        "seed": seed,
+        "score": round(sum(rewards) / len(rewards), 4) if rewards else 0.0,
         "steps": observation.step_number,
         "outcome": "success" if observation.traffic_pct >= 1.0 else "rollback",
         "actions": actions,
@@ -133,7 +139,7 @@ async def main(base_url: str | None) -> None:
         env_runner = _LocalEnvRunner()
 
     async with env_runner as env:
-        for task_id in ["easy", "medium", "hard", "expert"]:
+        for task_id in PUBLIC_TASK_IDS:
             result = await run_task(env, task_id)
             all_scores.append(result["score"])
             print(f"{task_id}: score={result['score']:.4f} steps={result['steps']} outcome={result['outcome']}")

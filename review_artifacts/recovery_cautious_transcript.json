@@ -1,0 +1,651 @@
+{
+  "episode_id": "artifact-generated",
+  "episode_score": 0.9592,
+  "episode_summary": "Reached 100% traffic without a confirmed canary breach. Final normalized score=0.9592.",
+  "first_breach_point": null,
+  "outcome": "success",
+  "rollback_assessment": {
+    "benchmark_rollback_at": null,
+    "relative_to_benchmark_point": "not_applicable",
+    "relative_to_first_breach": "not_applicable",
+    "rollback_action_taken": false,
+    "rollback_traffic_pct": null
+  },
+  "score_breakdown": {
+    "breach_detection_score": 0.3475,
+    "promotion_safety_score": 0.2625,
+    "reasoning_score": 0.1,
+    "rollback_timing_score": 0.2492,
+    "total_score": 0.9592
+  },
+  "seed": 0,
+  "steps": 12,
+  "task_id": "recovery",
+  "task_name": "Transient hot shard recovery",
+  "transcript": [
+    {
+      "action": {
+        "action_type": "increase_10",
+        "reasoning": "Metrics are healthy with error=0.0010 and differential_p99=0.0ms, so increase traffic by 10%.",
+        "slo_breach_detected": false,
+        "state_assessment": "healthy"
+      },
+      "actual_breach": false,
+      "decision_number": 1,
+      "explanation": "The observed state was healthy: canary_error_rate=0.0010, differential_p99_ms=0.0.",
+      "policy_assessment": "healthy_standard_promotion",
+      "post_observation": {
+        "alert_count": 0,
+        "canary_error_rate": 0.001,
+        "canary_p99_ms": 143.0,
+        "consecutive_holds": 0,
+        "differential_error": 0.0,
+        "differential_p99_ms": 0.0,
+        "episode_score": 0.97,
+        "is_done": false,
+        "rollback_on_canary_p99_ms": null,
+        "rollback_on_differential_p99_ms": 50.0,
+        "rollback_on_error_rate": 0.005,
+        "stable_error_rate": 0.001,
+        "stable_p99_ms": 143.0,
+        "step_number": 1,
+        "step_reward": 0.97,
+        "traffic_pct": 0.1
+      },
+      "pre_observation": {
+        "alert_count": 0,
+        "canary_error_rate": 0.001,
+        "canary_p99_ms": 143.0,
+        "consecutive_holds": 0,
+        "differential_error": 0.0,
+        "differential_p99_ms": 0.0,
+        "rollback_on_canary_p99_ms": null,
+        "rollback_on_differential_p99_ms": 50.0,
+        "rollback_on_error_rate": 0.005,
+        "stable_error_rate": 0.001,
+        "stable_p99_ms": 143.0,
+        "step_number": 0,
+        "traffic_pct": 0.0
+      },
+      "reward_breakdown": {
+        "breach_detection_score": 0.35,
+        "promotion_safety_score": 0.27,
+        "reasoning_score": 0.1,
+        "rollback_timing_score": 0.25
+      },
+      "step_score": 0.97
+    },
+    {
+      "action": {
+        "action_type": "increase_10",
+        "reasoning": "Metrics are healthy with error=0.0010 and differential_p99=0.0ms, so increase traffic by 10%.",
+        "slo_breach_detected": false,
+        "state_assessment": "healthy"
+      },
+      "actual_breach": false,
+      "decision_number": 2,
+      "explanation": "The observed state was healthy: canary_error_rate=0.0010, differential_p99_ms=0.0.",
+      "policy_assessment": "healthy_standard_promotion",
+      "post_observation": {
+        "alert_count": 0,
+        "canary_error_rate": 0.001,
+        "canary_p99_ms": 143.0,
+        "consecutive_holds": 0,
+        "differential_error": 0.0,
+        "differential_p99_ms": 0.0,
+        "episode_score": 0.97,
+        "is_done": false,
+        "rollback_on_canary_p99_ms": null,
+        "rollback_on_differential_p99_ms": 50.0,
+        "rollback_on_error_rate": 0.005,
+        "stable_error_rate": 0.001,
+        "stable_p99_ms": 143.0,
+        "step_number": 2,
+        "step_reward": 0.97,
+        "traffic_pct": 0.2
+      },
+      "pre_observation": {
+        "alert_count": 0,
+        "canary_error_rate": 0.001,
+        "canary_p99_ms": 143.0,
+        "consecutive_holds": 0,
+        "differential_error": 0.0,
+        "differential_p99_ms": 0.0,
+        "rollback_on_canary_p99_ms": null,
+        "rollback_on_differential_p99_ms": 50.0,
+        "rollback_on_error_rate": 0.005,
+        "stable_error_rate": 0.001,
+        "stable_p99_ms": 143.0,
+        "step_number": 1,
+        "traffic_pct": 0.1
+      },
+      "reward_breakdown": {
+        "breach_detection_score": 0.35,
+        "promotion_safety_score": 0.27,
+        "reasoning_score": 0.1,
+        "rollback_timing_score": 0.25
+      },
+      "step_score": 0.97
+    },
+    {
+      "action": {
+        "action_type": "increase_10",
+        "reasoning": "Metrics are healthy with error=0.0010 and differential_p99=0.0ms, so increase traffic by 10%.",
+        "slo_breach_detected": false,
+        "state_assessment": "healthy"
+      },
+      "actual_breach": false,
+      "decision_number": 3,
+      "explanation": "The observed state was healthy: canary_error_rate=0.0010, differential_p99_ms=0.0.",
+      "policy_assessment": "healthy_standard_promotion",
+      "post_observation": {
+        "alert_count": 0,
+        "canary_error_rate": 0.0027,
+        "canary_p99_ms": 176.0,
+        "consecutive_holds": 0,
+        "differential_error": 0.0017,
+        "differential_p99_ms": 33.0,
+        "episode_score": 0.97,
+        "is_done": false,
+        "rollback_on_canary_p99_ms": null,
+        "rollback_on_differential_p99_ms": 50.0,
+        "rollback_on_error_rate": 0.005,
+        "stable_error_rate": 0.001,
+        "stable_p99_ms": 143.0,
+        "step_number": 3,
+        "step_reward": 0.97,
+        "traffic_pct": 0.3
+      },
+      "pre_observation": {
+        "alert_count": 0,
+        "canary_error_rate": 0.001,
+        "canary_p99_ms": 143.0,
+        "consecutive_holds": 0,
+        "differential_error": 0.0,
+        "differential_p99_ms": 0.0,
+        "rollback_on_canary_p99_ms": null,
+        "rollback_on_differential_p99_ms": 50.0,
+        "rollback_on_error_rate": 0.005,
+        "stable_error_rate": 0.001,
+        "stable_p99_ms": 143.0,
+        "step_number": 2,
+        "traffic_pct": 0.2
+      },
+      "reward_breakdown": {
+        "breach_detection_score": 0.35,
+        "promotion_safety_score": 0.27,
+        "reasoning_score": 0.1,
+        "rollback_timing_score": 0.25
+      },
+      "step_score": 0.97
+    },
+    {
+      "action": {
+        "action_type": "hold",
+        "reasoning": "Metrics are drifting toward the guardrail with error=0.0027 and differential_p99=33.0ms, so hold for confirmation.",
+        "slo_breach_detected": false,
+        "state_assessment": "warning"
+      },
+      "actual_breach": false,
+      "decision_number": 4,
+      "explanation": "The canary was temporarily 33.0ms slower than stable, but still below rollback guardrails and consistent with a recoverable transient issue.",
+      "policy_assessment": "correct_recovery_hold",
+      "post_observation": {
+        "alert_count": 0,
+        "canary_error_rate": 0.0012,
+        "canary_p99_ms": 149.0,
+        "consecutive_holds": 1,
+        "differential_error": 0.0002,
+        "differential_p99_ms": 6.0,
+        "episode_score": 0.9375,
+        "is_done": false,
+        "rollback_on_canary_p99_ms": null,
+        "rollback_on_differential_p99_ms": 50.0,
+        "rollback_on_error_rate": 0.005,
+        "stable_error_rate": 0.001,
+        "stable_p99_ms": 143.0,
+        "step_number": 4,
+        "step_reward": 0.84,
+        "traffic_pct": 0.3
+      },
+      "pre_observation": {
+        "alert_count": 0,
+        "canary_error_rate": 0.0027,
+        "canary_p99_ms": 176.0,
+        "consecutive_holds": 0,
+        "differential_error": 0.0017,
+        "differential_p99_ms": 33.0,
+        "rollback_on_canary_p99_ms": null,
+        "rollback_on_differential_p99_ms": 50.0,
+        "rollback_on_error_rate": 0.005,
+        "stable_error_rate": 0.001,
+        "stable_p99_ms": 143.0,
+        "step_number": 3,
+        "traffic_pct": 0.3
+      },
+      "reward_breakdown": {
+        "breach_detection_score": 0.32,
+        "promotion_safety_score": 0.18,
+        "reasoning_score": 0.1,
+        "rollback_timing_score": 0.24
+      },
+      "step_score": 0.84
+    },
+    {
+      "action": {
+        "action_type": "increase_10",
+        "reasoning": "Metrics are healthy with error=0.0012 and differential_p99=6.0ms, so increase traffic by 10%.",
+        "slo_breach_detected": false,
+        "state_assessment": "healthy"
+      },
+      "actual_breach": false,
+      "decision_number": 5,
+      "explanation": "The observed state was healthy: canary_error_rate=0.0012, differential_p99_ms=6.0.",
+      "policy_assessment": "healthy_standard_promotion",
+      "post_observation": {
+        "alert_count": 0,
+        "canary_error_rate": 0.0012,
+        "canary_p99_ms": 149.0,
+        "consecutive_holds": 0,
+        "differential_error": 0.0002,
+        "differential_p99_ms": 6.0,
+        "episode_score": 0.944,
+        "is_done": false,
+        "rollback_on_canary_p99_ms": null,
+        "rollback_on_differential_p99_ms": 50.0,
+        "rollback_on_error_rate": 0.005,
+        "stable_error_rate": 0.001,
+        "stable_p99_ms": 143.0,
+        "step_number": 5,
+        "step_reward": 0.97,
+        "traffic_pct": 0.4
+      },
+      "pre_observation": {
+        "alert_count": 0,
+        "canary_error_rate": 0.0012,
+        "canary_p99_ms": 149.0,
+        "consecutive_holds": 1,
+        "differential_error": 0.0002,
+        "differential_p99_ms": 6.0,
+        "rollback_on_canary_p99_ms": null,
+        "rollback_on_differential_p99_ms": 50.0,
+        "rollback_on_error_rate": 0.005,
+        "stable_error_rate": 0.001,
+        "stable_p99_ms": 143.0,
+        "step_number": 4,
+        "traffic_pct": 0.3
+      },
+      "reward_breakdown": {
+        "breach_detection_score": 0.35,
+        "promotion_safety_score": 0.27,
+        "reasoning_score": 0.1,
+        "rollback_timing_score": 0.25
+      },
+      "step_score": 0.97
+    },
+    {
+      "action": {
+        "action_type": "increase_10",
+        "reasoning": "Metrics are healthy with error=0.0012 and differential_p99=6.0ms, so increase traffic by 10%.",
+        "slo_breach_detected": false,
+        "state_assessment": "healthy"
+      },
+      "actual_breach": false,
+      "decision_number": 6,
+      "explanation": "The observed state was healthy: canary_error_rate=0.0012, differential_p99_ms=6.0.",
+      "policy_assessment": "healthy_standard_promotion",
+      "post_observation": {
+        "alert_count": 0,
+        "canary_error_rate": 0.0012,
+        "canary_p99_ms": 149.0,
+        "consecutive_holds": 0,
+        "differential_error": 0.0002,
+        "differential_p99_ms": 6.0,
+        "episode_score": 0.9483,
+        "is_done": false,
+        "rollback_on_canary_p99_ms": null,
+        "rollback_on_differential_p99_ms": 50.0,
+        "rollback_on_error_rate": 0.005,
+        "stable_error_rate": 0.001,
+        "stable_p99_ms": 143.0,
+        "step_number": 6,
+        "step_reward": 0.97,
+        "traffic_pct": 0.5
+      },
+      "pre_observation": {
+        "alert_count": 0,
+        "canary_error_rate": 0.0012,
+        "canary_p99_ms": 149.0,
+        "consecutive_holds": 0,
+        "differential_error": 0.0002,
+        "differential_p99_ms": 6.0,
+        "rollback_on_canary_p99_ms": null,
+        "rollback_on_differential_p99_ms": 50.0,
+        "rollback_on_error_rate": 0.005,
+        "stable_error_rate": 0.001,
+        "stable_p99_ms": 143.0,
+        "step_number": 5,
+        "traffic_pct": 0.4
+      },
+      "reward_breakdown": {
+        "breach_detection_score": 0.35,
+        "promotion_safety_score": 0.27,
+        "reasoning_score": 0.1,
+        "rollback_timing_score": 0.25
+      },
+      "step_score": 0.97
+    },
+    {
+      "action": {
+        "action_type": "increase_10",
+        "reasoning": "Metrics are healthy with error=0.0012 and differential_p99=6.0ms, so increase traffic by 10%.",
+        "slo_breach_detected": false,
+        "state_assessment": "healthy"
+      },
+      "actual_breach": false,
+      "decision_number": 7,
+      "explanation": "The observed state was healthy: canary_error_rate=0.0012, differential_p99_ms=6.0.",
+      "policy_assessment": "healthy_standard_promotion",
+      "post_observation": {
+        "alert_count": 0,
+        "canary_error_rate": 0.0012,
+        "canary_p99_ms": 149.0,
+        "consecutive_holds": 0,
+        "differential_error": 0.0002,
+        "differential_p99_ms": 6.0,
+        "episode_score": 0.9514,
+        "is_done": false,
+        "rollback_on_canary_p99_ms": null,
+        "rollback_on_differential_p99_ms": 50.0,
+        "rollback_on_error_rate": 0.005,
+        "stable_error_rate": 0.001,
+        "stable_p99_ms": 143.0,
+        "step_number": 7,
+        "step_reward": 0.97,
+        "traffic_pct": 0.6
+      },
+      "pre_observation": {
+        "alert_count": 0,
+        "canary_error_rate": 0.0012,
+        "canary_p99_ms": 149.0,
+        "consecutive_holds": 0,
+        "differential_error": 0.0002,
+        "differential_p99_ms": 6.0,
+        "rollback_on_canary_p99_ms": null,
+        "rollback_on_differential_p99_ms": 50.0,
+        "rollback_on_error_rate": 0.005,
+        "stable_error_rate": 0.001,
+        "stable_p99_ms": 143.0,
+        "step_number": 6,
+        "traffic_pct": 0.5
+      },
+      "reward_breakdown": {
+        "breach_detection_score": 0.35,
+        "promotion_safety_score": 0.27,
+        "reasoning_score": 0.1,
+        "rollback_timing_score": 0.25
+      },
+      "step_score": 0.97
+    },
+    {
+      "action": {
+        "action_type": "increase_10",
+        "reasoning": "Metrics are healthy with error=0.0012 and differential_p99=6.0ms, so increase traffic by 10%.",
+        "slo_breach_detected": false,
+        "state_assessment": "healthy"
+      },
+      "actual_breach": false,
+      "decision_number": 8,
+      "explanation": "The observed state was healthy: canary_error_rate=0.0012, differential_p99_ms=6.0.",
+      "policy_assessment": "healthy_standard_promotion",
+      "post_observation": {
+        "alert_count": 0,
+        "canary_error_rate": 0.0012,
+        "canary_p99_ms": 149.0,
+        "consecutive_holds": 0,
+        "differential_error": 0.0002,
+        "differential_p99_ms": 6.0,
+        "episode_score": 0.9537,
+        "is_done": false,
+        "rollback_on_canary_p99_ms": null,
+        "rollback_on_differential_p99_ms": 50.0,
+        "rollback_on_error_rate": 0.005,
+        "stable_error_rate": 0.001,
+        "stable_p99_ms": 143.0,
+        "step_number": 8,
+        "step_reward": 0.97,
+        "traffic_pct": 0.7
+      },
+      "pre_observation": {
+        "alert_count": 0,
+        "canary_error_rate": 0.0012,
+        "canary_p99_ms": 149.0,
+        "consecutive_holds": 0,
+        "differential_error": 0.0002,
+        "differential_p99_ms": 6.0,
+        "rollback_on_canary_p99_ms": null,
+        "rollback_on_differential_p99_ms": 50.0,
+        "rollback_on_error_rate": 0.005,
+        "stable_error_rate": 0.001,
+        "stable_p99_ms": 143.0,
+        "step_number": 7,
+        "traffic_pct": 0.6
+      },
+      "reward_breakdown": {
+        "breach_detection_score": 0.35,
+        "promotion_safety_score": 0.27,
+        "reasoning_score": 0.1,
+        "rollback_timing_score": 0.25
+      },
+      "step_score": 0.97
+    },
+    {
+      "action": {
+        "action_type": "increase_10",
+        "reasoning": "Metrics are healthy with error=0.0012 and differential_p99=6.0ms, so increase traffic by 10%.",
+        "slo_breach_detected": false,
+        "state_assessment": "healthy"
+      },
+      "actual_breach": false,
+      "decision_number": 9,
+      "explanation": "The observed state was healthy: canary_error_rate=0.0012, differential_p99_ms=6.0.",
+      "policy_assessment": "healthy_standard_promotion",
+      "post_observation": {
+        "alert_count": 0,
+        "canary_error_rate": 0.0012,
+        "canary_p99_ms": 149.0,
+        "consecutive_holds": 0,
+        "differential_error": 0.0002,
+        "differential_p99_ms": 6.0,
+        "episode_score": 0.9556,
+        "is_done": false,
+        "rollback_on_canary_p99_ms": null,
+        "rollback_on_differential_p99_ms": 50.0,
+        "rollback_on_error_rate": 0.005,
+        "stable_error_rate": 0.001,
+        "stable_p99_ms": 143.0,
+        "step_number": 9,
+        "step_reward": 0.97,
+        "traffic_pct": 0.8
+      },
+      "pre_observation": {
+        "alert_count": 0,
+        "canary_error_rate": 0.0012,
+        "canary_p99_ms": 149.0,
+        "consecutive_holds": 0,
+        "differential_error": 0.0002,
+        "differential_p99_ms": 6.0,
+        "rollback_on_canary_p99_ms": null,
+        "rollback_on_differential_p99_ms": 50.0,
+        "rollback_on_error_rate": 0.005,
+        "stable_error_rate": 0.001,
+        "stable_p99_ms": 143.0,
+        "step_number": 8,
+        "traffic_pct": 0.7
+      },
+      "reward_breakdown": {
+        "breach_detection_score": 0.35,
+        "promotion_safety_score": 0.27,
+        "reasoning_score": 0.1,
+        "rollback_timing_score": 0.25
+      },
+      "step_score": 0.97
+    },
+    {
+      "action": {
+        "action_type": "increase_10",
+        "reasoning": "Metrics are healthy with error=0.0012 and differential_p99=6.0ms, so increase traffic by 10%.",
+        "slo_breach_detected": false,
+        "state_assessment": "healthy"
+      },
+      "actual_breach": false,
+      "decision_number": 10,
+      "explanation": "The observed state was healthy: canary_error_rate=0.0012, differential_p99_ms=6.0.",
+      "policy_assessment": "healthy_standard_promotion",
+      "post_observation": {
+        "alert_count": 0,
+        "canary_error_rate": 0.0012,
+        "canary_p99_ms": 149.0,
+        "consecutive_holds": 0,
+        "differential_error": 0.0002,
+        "differential_p99_ms": 6.0,
+        "episode_score": 0.957,
+        "is_done": false,
+        "rollback_on_canary_p99_ms": null,
+        "rollback_on_differential_p99_ms": 50.0,
+        "rollback_on_error_rate": 0.005,
+        "stable_error_rate": 0.001,
+        "stable_p99_ms": 143.0,
+        "step_number": 10,
+        "step_reward": 0.97,
+        "traffic_pct": 0.9
+      },
+      "pre_observation": {
+        "alert_count": 0,
+        "canary_error_rate": 0.0012,
+        "canary_p99_ms": 149.0,
+        "consecutive_holds": 0,
+        "differential_error": 0.0002,
+        "differential_p99_ms": 6.0,
+        "rollback_on_canary_p99_ms": null,
+        "rollback_on_differential_p99_ms": 50.0,
+        "rollback_on_error_rate": 0.005,
+        "stable_error_rate": 0.001,
+        "stable_p99_ms": 143.0,
+        "step_number": 9,
+        "traffic_pct": 0.8
+      },
+      "reward_breakdown": {
+        "breach_detection_score": 0.35,
+        "promotion_safety_score": 0.27,
+        "reasoning_score": 0.1,
+        "rollback_timing_score": 0.25
+      },
+      "step_score": 0.97
+    },
+    {
+      "action": {
+        "action_type": "increase_10",
+        "reasoning": "Metrics are healthy with error=0.0012 and differential_p99=6.0ms, so increase traffic by 10%.",
+        "slo_breach_detected": false,
+        "state_assessment": "healthy"
+      },
+      "actual_breach": false,
+      "decision_number": 11,
+      "explanation": "The observed state was healthy: canary_error_rate=0.0012, differential_p99_ms=6.0.",
+      "policy_assessment": "healthy_standard_promotion",
+      "post_observation": {
+        "alert_count": 0,
+        "canary_error_rate": 0.0012,
+        "canary_p99_ms": 149.0,
+        "consecutive_holds": 0,
+        "differential_error": 0.0002,
+        "differential_p99_ms": 6.0,
+        "episode_score": 0.9582,
+        "is_done": false,
+        "rollback_on_canary_p99_ms": null,
+        "rollback_on_differential_p99_ms": 50.0,
+        "rollback_on_error_rate": 0.005,
+        "stable_error_rate": 0.001,
+        "stable_p99_ms": 143.0,
+        "step_number": 11,
+        "step_reward": 0.97,
+        "traffic_pct": 1.0
+      },
+      "pre_observation": {
+        "alert_count": 0,
+        "canary_error_rate": 0.0012,
+        "canary_p99_ms": 149.0,
+        "consecutive_holds": 0,
+        "differential_error": 0.0002,
+        "differential_p99_ms": 6.0,
+        "rollback_on_canary_p99_ms": null,
+        "rollback_on_differential_p99_ms": 50.0,
+        "rollback_on_error_rate": 0.005,
+        "stable_error_rate": 0.001,
+        "stable_p99_ms": 143.0,
+        "step_number": 10,
+        "traffic_pct": 0.9
+      },
+      "reward_breakdown": {
+        "breach_detection_score": 0.35,
+        "promotion_safety_score": 0.27,
+        "reasoning_score": 0.1,
+        "rollback_timing_score": 0.25
+      },
+      "step_score": 0.97
+    },
+    {
+      "action": {
+        "action_type": "increase_10",
+        "reasoning": "Metrics are healthy with error=0.0012 and differential_p99=6.0ms, so increase traffic by 10%.",
+        "slo_breach_detected": false,
+        "state_assessment": "healthy"
+      },
+      "actual_breach": false,
+      "decision_number": 12,
+      "explanation": "The observed state was healthy: canary_error_rate=0.0012, differential_p99_ms=6.0.",
+      "policy_assessment": "healthy_standard_promotion",
+      "post_observation": {
+        "alert_count": 0,
+        "canary_error_rate": 0.0012,
+        "canary_p99_ms": 149.0,
+        "consecutive_holds": 0,
+        "differential_error": 0.0002,
+        "differential_p99_ms": 6.0,
+        "episode_score": 0.9592,
+        "is_done": true,
+        "rollback_on_canary_p99_ms": null,
+        "rollback_on_differential_p99_ms": 50.0,
+        "rollback_on_error_rate": 0.005,
+        "stable_error_rate": 0.001,
+        "stable_p99_ms": 143.0,
+        "step_number": 12,
+        "step_reward": 0.97,
+        "traffic_pct": 1.0
+      },
+      "pre_observation": {
+        "alert_count": 0,
+        "canary_error_rate": 0.0012,
+        "canary_p99_ms": 149.0,
+        "consecutive_holds": 0,
+        "differential_error": 0.0002,
+        "differential_p99_ms": 6.0,
+        "rollback_on_canary_p99_ms": null,
+        "rollback_on_differential_p99_ms": 50.0,
+        "rollback_on_error_rate": 0.005,
+        "stable_error_rate": 0.001,
+        "stable_p99_ms": 143.0,
+        "step_number": 11,
+        "traffic_pct": 1.0
+      },
+      "reward_breakdown": {
+        "breach_detection_score": 0.35,
+        "promotion_safety_score": 0.27,
+        "reasoning_score": 0.1,
+        "rollback_timing_score": 0.25
+      },
+      "step_score": 0.97
+    }
+  ]
+}

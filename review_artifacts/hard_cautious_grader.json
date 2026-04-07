@@ -1,0 +1,24 @@
+{
+  "actual_breach": true,
+  "breach_detection_score": 0.35,
+  "deterministic": true,
+  "explanation": "The observed state was in breach: canary_error_rate=0.0051, differential_p99_ms=54.0.",
+  "feedback": [
+    "Rolled back in response to a confirmed canary breach.",
+    "Structured state_assessment matched the observed state (breach). Structured breach flag was internally consistent and correct. Free-text reasoning is retained for transcript clarity only and does not affect the score."
+  ],
+  "max_score": 1.0,
+  "normalized": true,
+  "policy_assessment": "correct_rollback",
+  "promotion_safety_score": 0.3,
+  "reasoning_score": 0.1,
+  "reward_breakdown": {
+    "breach_detection_score": 0.35,
+    "promotion_safety_score": 0.3,
+    "reasoning_score": 0.1,
+    "rollback_timing_score": 0.25
+  },
+  "rollback_timing_score": 0.25,
+  "task_id": "hard",
+  "total_score": 1.0
+}

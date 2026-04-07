@@ -34,7 +34,6 @@ if USE_PACKAGE_IMPORTS:
     from canary_release_env.server.grader import grade
     from canary_release_env.server.policies import baseline_action
     from canary_release_env.server.scenarios import (
-        GLOBAL_NOISE_STEP,
         SCENARIOS,
         SLO_DIFFERENTIAL_P99_THRESHOLD,
         SLO_ERROR_THRESHOLD,
@@ -46,7 +45,6 @@ else:
     from server.grader import grade
     from server.policies import baseline_action
     from server.scenarios import (
-        GLOBAL_NOISE_STEP,
         SCENARIOS,
         SLO_DIFFERENTIAL_P99_THRESHOLD,
         SLO_ERROR_THRESHOLD,
@@ -77,6 +75,7 @@ _completed_episode_results: OrderedDict[str, dict[str, Any]] = OrderedDict()
 
 class CreateEpisodeRequest(BaseModel):
     task: str = "easy"
+    seed: int = Field(default=0, ge=0)
 
 
 class EpisodeStepRequest(BaseModel):
@@ -94,6 +93,10 @@ class GraderRequest(BaseModel):
     alert_count: int = Field(default=0, ge=0)
     step_number: int = Field(default=0, ge=0)
     consecutive_holds: int = Field(default=0, ge=0)
+
+
+def _serialize_agent_observation(observation: CanaryObservation) -> dict[str, Any]:
+    return observation.model_dump(exclude={"reward", "done", "metadata"})
 
 
 def _get_episode(episode_id: str) -> CanaryEnvironment:
@@ -123,13 +126,14 @@ def create_episode(request: CreateEpisodeRequest = CreateEpisodeRequest()) -> di
         )
 
     env = CanaryEnvironment()
-    observation = env.reset(task=request.task)
+    observation = env.reset(task=request.task, seed=request.seed)
     episode_id = env.state.episode_id
     _episodes[episode_id] = env
     return {
         "episode_id": episode_id,
-        "observation": observation.model_dump(),
-        "done": observation.is_done,
+        "episode_context": env.episode_context(),
+        "observation": _serialize_agent_observation(observation),
+        "done": observation.done,
     }
 
 
@@ -143,11 +147,12 @@ def step_episode(episode_id: str, request: EpisodeStepRequest) -> dict[str, Any]
 
     observation = env.step(action)
     response: dict[str, Any] = {
-        "observation": observation.model_dump(),
-        "reward": observation.step_reward,
-        "done": observation.is_done,
+        "observation": _serialize_agent_observation(observation),
+        "reward": observation.reward,
+        "done": observation.done,
+        "evaluation": env.last_evaluation(),
     }
-    if observation.is_done:
+    if observation.done:
         response["episode_result"] = _store_completed_episode(env)
         del _episodes[episode_id]
     return response
@@ -203,12 +208,16 @@ def list_tasks() -> dict[str, Any]:
         },
         "notes": {
             "canonical_stateful_interface": "WebSocket /ws via OpenEnv clients",
-            "extra_stateful_http_interface": "/episodes",
-            "global_noise_step": GLOBAL_NOISE_STEP,
+            "recommended_plain_http_interface": "/episodes",
+            "recommended_plain_http_flow": "POST /episodes -> POST /episodes/{episode_id}/step -> GET /episodes/{episode_id}/transcript",
             "episode_score_definition": "running average of normalized step scores",
-            "standard_http_reset_step_state": "validator-safe but stateless across separate HTTP requests",
+            "agent_observation_contract": "Telemetry, rollout progress, and guardrails only; evaluator feedback is kept in reviewer-only transcript and /episodes evaluation payloads.",
+            "state_assessment_contract": "Public actions use coarse labels {healthy, warning, noise, phantom_alert, breach}; the grader internally distinguishes richer hidden rollout states for action-fit and timing.",
+            "reasoning_contract": "The reasoning string is retained for transcript clarity and does not affect the score; public grading is fully determined by the structured diagnosis and action choice.",
+            "seeded_variants": "POST /reset and POST /episodes accept a deterministic OpenEnv seed; non-zero seeds vary event timing, alert counts, drift onset, recovery duration, and signal signatures within each scenario family.",
+            "standard_http_reset_step_state": "validator-safe but stateless across separate HTTP requests; use /episodes or /ws for actual stateful sessions",
             "completed_episode_retention": f"{MAX_COMPLETED_EPISODES} recent completed episode results kept in memory",
-            "invalid_task_behavior": "/episodes rejects unknown task ids with 422; standard /reset defaults unknown tasks to easy and says so in feedback",
+            "invalid_task_behavior": "/episodes rejects unknown task ids with 422; standard /reset defaults unknown task ids to easy for validator safety",
         },
     }
 
@@ -264,9 +273,9 @@ def run_baseline() -> dict[str, Any]:
 
     for task_id in SCENARIOS:
         env = CanaryEnvironment()
-        observation = env.reset(task=task_id)
+        observation = env.reset(task=task_id, seed=0)
 
-        while not observation.is_done:
+        while not observation.done:
             action = baseline_action(observation)
             observation = env.step(action)
 

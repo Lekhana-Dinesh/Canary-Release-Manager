@@ -1,0 +1,1553 @@
+{
+  "probe_policy": "Deterministic fixed 10% promotions used only to surface event ordering and signal shape diversity; this is not a benchmark policy.",
+  "seeds": [
+    0,
+    3,
+    5,
+    7,
+    11,
+    13,
+    19,
+    23
+  ],
+  "task_summaries": {
+    "easy": {
+      "distinct_breach_steps": [
+        2,
+        3
+      ],
+      "distinct_noise_steps": [],
+      "distinct_phantom_steps": [],
+      "distinct_recovery_clear_steps": [],
+      "distinct_warning_steps": []
+    },
+    "expert": {
+      "distinct_breach_steps": [
+        4
+      ],
+      "distinct_noise_steps": [],
+      "distinct_phantom_steps": [
+        1,
+        2,
+        3
+      ],
+      "distinct_recovery_clear_steps": [],
+      "distinct_warning_steps": []
+    },
+    "hard": {
+      "distinct_breach_steps": [
+        4,
+        5
+      ],
+      "distinct_noise_steps": [
+        2,
+        3,
+        4
+      ],
+      "distinct_phantom_steps": [],
+      "distinct_recovery_clear_steps": [],
+      "distinct_warning_steps": [
+        3
+      ]
+    },
+    "medium": {
+      "distinct_breach_steps": [
+        3,
+        4
+      ],
+      "distinct_noise_steps": [],
+      "distinct_phantom_steps": [],
+      "distinct_recovery_clear_steps": [],
+      "distinct_warning_steps": [
+        3
+      ]
+    },
+    "recovery": {
+      "distinct_breach_steps": [],
+      "distinct_noise_steps": [],
+      "distinct_phantom_steps": [],
+      "distinct_recovery_clear_steps": [
+        4,
+        5
+      ],
+      "distinct_warning_steps": [
+        3,
+        4
+      ]
+    },
+    "silent": {
+      "distinct_breach_steps": [
+        4,
+        5
+      ],
+      "distinct_noise_steps": [],
+      "distinct_phantom_steps": [],
+      "distinct_recovery_clear_steps": [],
+      "distinct_warning_steps": [
+        3
+      ]
+    }
+  },
+  "tasks": {
+    "easy": {
+      "0": {
+        "final_probe_state": {
+          "alert_count": 1,
+          "canary_error_rate": 0.109,
+          "differential_error": 0.108,
+          "differential_p99_ms": 720.0,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 1,
+          "canary_error_rate": 0.013,
+          "differential_error": 0.012,
+          "differential_p99_ms": 80.0,
+          "public_state_assessment": "breach",
+          "step_number": 2,
+          "traffic_pct": 0.2
+        },
+        "first_phantom_alert": null,
+        "first_shared_noise": null,
+        "first_warning": null,
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "11": {
+        "final_probe_state": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0945,
+          "differential_error": 0.0935,
+          "differential_p99_ms": 680.0,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0065,
+          "differential_error": 0.0055,
+          "differential_p99_ms": 40.0,
+          "public_state_assessment": "breach",
+          "step_number": 2,
+          "traffic_pct": 0.2
+        },
+        "first_phantom_alert": null,
+        "first_shared_noise": null,
+        "first_warning": null,
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "13": {
+        "final_probe_state": {
+          "alert_count": 1,
+          "canary_error_rate": 0.10908,
+          "differential_error": 0.10808,
+          "differential_p99_ms": 774.0,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 1,
+          "canary_error_rate": 0.01308,
+          "differential_error": 0.01208,
+          "differential_p99_ms": 86.0,
+          "public_state_assessment": "breach",
+          "step_number": 2,
+          "traffic_pct": 0.2
+        },
+        "first_phantom_alert": null,
+        "first_shared_noise": null,
+        "first_warning": null,
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "19": {
+        "final_probe_state": {
+          "alert_count": 1,
+          "canary_error_rate": 0.10908,
+          "differential_error": 0.10808,
+          "differential_p99_ms": 774.0,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 1,
+          "canary_error_rate": 0.01308,
+          "differential_error": 0.01208,
+          "differential_p99_ms": 86.0,
+          "public_state_assessment": "breach",
+          "step_number": 2,
+          "traffic_pct": 0.2
+        },
+        "first_phantom_alert": null,
+        "first_shared_noise": null,
+        "first_warning": null,
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "23": {
+        "final_probe_state": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0945,
+          "differential_error": 0.0935,
+          "differential_p99_ms": 680.0,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0065,
+          "differential_error": 0.0055,
+          "differential_p99_ms": 40.0,
+          "public_state_assessment": "breach",
+          "step_number": 2,
+          "traffic_pct": 0.2
+        },
+        "first_phantom_alert": null,
+        "first_shared_noise": null,
+        "first_warning": null,
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "3": {
+        "final_probe_state": {
+          "alert_count": 1,
+          "canary_error_rate": 0.10492,
+          "differential_error": 0.10392,
+          "differential_p99_ms": 592.0,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 1,
+          "canary_error_rate": 0.01392,
+          "differential_error": 0.01292,
+          "differential_p99_ms": 74.0,
+          "public_state_assessment": "breach",
+          "step_number": 3,
+          "traffic_pct": 0.3
+        },
+        "first_phantom_alert": null,
+        "first_shared_noise": null,
+        "first_warning": null,
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "5": {
+        "final_probe_state": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0945,
+          "differential_error": 0.0935,
+          "differential_p99_ms": 680.0,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0065,
+          "differential_error": 0.0055,
+          "differential_p99_ms": 40.0,
+          "public_state_assessment": "breach",
+          "step_number": 2,
+          "traffic_pct": 0.2
+        },
+        "first_phantom_alert": null,
+        "first_shared_noise": null,
+        "first_warning": null,
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "7": {
+        "final_probe_state": {
+          "alert_count": 1,
+          "canary_error_rate": 0.10908,
+          "differential_error": 0.10808,
+          "differential_p99_ms": 774.0,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 1,
+          "canary_error_rate": 0.01308,
+          "differential_error": 0.01208,
+          "differential_p99_ms": 86.0,
+          "public_state_assessment": "breach",
+          "step_number": 2,
+          "traffic_pct": 0.2
+        },
+        "first_phantom_alert": null,
+        "first_shared_noise": null,
+        "first_warning": null,
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      }
+    },
+    "expert": {
+      "0": {
+        "final_probe_state": {
+          "alert_count": 1,
+          "canary_error_rate": 0.025,
+          "differential_error": 0.024,
+          "differential_p99_ms": 420.0,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0058,
+          "differential_error": 0.0048,
+          "differential_p99_ms": 84.0,
+          "public_state_assessment": "breach",
+          "step_number": 4,
+          "traffic_pct": 0.4
+        },
+        "first_phantom_alert": {
+          "alert_count": 4,
+          "canary_error_rate": 0.0018,
+          "differential_error": 0.0008,
+          "differential_p99_ms": 6.0,
+          "public_state_assessment": "phantom_alert",
+          "step_number": 2,
+          "traffic_pct": 0.2
+        },
+        "first_shared_noise": null,
+        "first_warning": null,
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "11": {
+        "final_probe_state": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0298,
+          "differential_error": 0.0288,
+          "differential_p99_ms": 448.0,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0082,
+          "differential_error": 0.0072,
+          "differential_p99_ms": 112.0,
+          "public_state_assessment": "breach",
+          "step_number": 4,
+          "traffic_pct": 0.4
+        },
+        "first_phantom_alert": {
+          "alert_count": 4,
+          "canary_error_rate": 0.0016,
+          "differential_error": 0.0006,
+          "differential_p99_ms": 9.0,
+          "public_state_assessment": "phantom_alert",
+          "step_number": 3,
+          "traffic_pct": 0.3
+        },
+        "first_shared_noise": null,
+        "first_warning": null,
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "13": {
+        "final_probe_state": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0206,
+          "differential_error": 0.0196,
+          "differential_p99_ms": 433.0,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0038,
+          "differential_error": 0.0028,
+          "differential_p99_ms": 61.0,
+          "public_state_assessment": "breach",
+          "step_number": 4,
+          "traffic_pct": 0.4
+        },
+        "first_phantom_alert": {
+          "alert_count": 3,
+          "canary_error_rate": 0.0018,
+          "differential_error": 0.0008,
+          "differential_p99_ms": 2.0,
+          "public_state_assessment": "phantom_alert",
+          "step_number": 2,
+          "traffic_pct": 0.2
+        },
+        "first_shared_noise": null,
+        "first_warning": null,
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "19": {
+        "final_probe_state": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0206,
+          "differential_error": 0.0196,
+          "differential_p99_ms": 433.0,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0038,
+          "differential_error": 0.0028,
+          "differential_p99_ms": 61.0,
+          "public_state_assessment": "breach",
+          "step_number": 4,
+          "traffic_pct": 0.4
+        },
+        "first_phantom_alert": {
+          "alert_count": 3,
+          "canary_error_rate": 0.0018,
+          "differential_error": 0.0008,
+          "differential_p99_ms": 2.0,
+          "public_state_assessment": "phantom_alert",
+          "step_number": 2,
+          "traffic_pct": 0.2
+        },
+        "first_shared_noise": null,
+        "first_warning": null,
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "23": {
+        "final_probe_state": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0298,
+          "differential_error": 0.0288,
+          "differential_p99_ms": 448.0,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0082,
+          "differential_error": 0.0072,
+          "differential_p99_ms": 112.0,
+          "public_state_assessment": "breach",
+          "step_number": 4,
+          "traffic_pct": 0.4
+        },
+        "first_phantom_alert": {
+          "alert_count": 4,
+          "canary_error_rate": 0.0016,
+          "differential_error": 0.0006,
+          "differential_p99_ms": 9.0,
+          "public_state_assessment": "phantom_alert",
+          "step_number": 3,
+          "traffic_pct": 0.3
+        },
+        "first_shared_noise": null,
+        "first_warning": null,
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "3": {
+        "final_probe_state": {
+          "alert_count": 1,
+          "canary_error_rate": 0.025,
+          "differential_error": 0.024,
+          "differential_p99_ms": 376.0,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0058,
+          "differential_error": 0.0048,
+          "differential_p99_ms": 76.0,
+          "public_state_assessment": "breach",
+          "step_number": 4,
+          "traffic_pct": 0.4
+        },
+        "first_phantom_alert": {
+          "alert_count": 5,
+          "canary_error_rate": 0.002,
+          "differential_error": 0.001,
+          "differential_p99_ms": 7.0,
+          "public_state_assessment": "phantom_alert",
+          "step_number": 1,
+          "traffic_pct": 0.1
+        },
+        "first_shared_noise": null,
+        "first_warning": null,
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "5": {
+        "final_probe_state": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0298,
+          "differential_error": 0.0288,
+          "differential_p99_ms": 448.0,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0082,
+          "differential_error": 0.0072,
+          "differential_p99_ms": 112.0,
+          "public_state_assessment": "breach",
+          "step_number": 4,
+          "traffic_pct": 0.4
+        },
+        "first_phantom_alert": {
+          "alert_count": 4,
+          "canary_error_rate": 0.0016,
+          "differential_error": 0.0006,
+          "differential_p99_ms": 9.0,
+          "public_state_assessment": "phantom_alert",
+          "step_number": 3,
+          "traffic_pct": 0.3
+        },
+        "first_shared_noise": null,
+        "first_warning": null,
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "7": {
+        "final_probe_state": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0206,
+          "differential_error": 0.0196,
+          "differential_p99_ms": 433.0,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0038,
+          "differential_error": 0.0028,
+          "differential_p99_ms": 61.0,
+          "public_state_assessment": "breach",
+          "step_number": 4,
+          "traffic_pct": 0.4
+        },
+        "first_phantom_alert": {
+          "alert_count": 3,
+          "canary_error_rate": 0.0018,
+          "differential_error": 0.0008,
+          "differential_p99_ms": 2.0,
+          "public_state_assessment": "phantom_alert",
+          "step_number": 2,
+          "traffic_pct": 0.2
+        },
+        "first_shared_noise": null,
+        "first_warning": null,
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      }
+    },
+    "hard": {
+      "0": {
+        "final_probe_state": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0522,
+          "differential_error": 0.0512,
+          "differential_p99_ms": 346.0,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0072,
+          "differential_error": 0.0062,
+          "differential_p99_ms": 70.0,
+          "public_state_assessment": "breach",
+          "step_number": 4,
+          "traffic_pct": 0.4
+        },
+        "first_phantom_alert": null,
+        "first_shared_noise": {
+          "alert_count": 0,
+          "canary_error_rate": 0.001,
+          "differential_error": 0.0,
+          "differential_p99_ms": 0.0,
+          "public_state_assessment": "noise",
+          "step_number": 3,
+          "traffic_pct": 0.3
+        },
+        "first_warning": null,
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "11": {
+        "final_probe_state": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0513,
+          "differential_error": 0.0503,
+          "differential_p99_ms": 338.0,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0075,
+          "differential_error": 0.0065,
+          "differential_p99_ms": 74.0,
+          "public_state_assessment": "breach",
+          "step_number": 4,
+          "traffic_pct": 0.4
+        },
+        "first_phantom_alert": null,
+        "first_shared_noise": {
+          "alert_count": 0,
+          "canary_error_rate": 0.001,
+          "differential_error": 0.0,
+          "differential_p99_ms": 0.0,
+          "public_state_assessment": "noise",
+          "step_number": 3,
+          "traffic_pct": 0.3
+        },
+        "first_warning": null,
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "13": {
+        "final_probe_state": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0616,
+          "differential_error": 0.0606,
+          "differential_p99_ms": 397.0,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0118,
+          "differential_error": 0.0108,
+          "differential_p99_ms": 97.0,
+          "public_state_assessment": "breach",
+          "step_number": 4,
+          "traffic_pct": 0.4
+        },
+        "first_phantom_alert": null,
+        "first_shared_noise": {
+          "alert_count": 0,
+          "canary_error_rate": 0.001,
+          "differential_error": 0.0,
+          "differential_p99_ms": 0.0,
+          "public_state_assessment": "noise",
+          "step_number": 2,
+          "traffic_pct": 0.2
+        },
+        "first_warning": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0044,
+          "differential_error": 0.0034,
+          "differential_p99_ms": 42.0,
+          "public_state_assessment": "warning",
+          "step_number": 3,
+          "traffic_pct": 0.3
+        },
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "19": {
+        "final_probe_state": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0616,
+          "differential_error": 0.0606,
+          "differential_p99_ms": 397.0,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0118,
+          "differential_error": 0.0108,
+          "differential_p99_ms": 97.0,
+          "public_state_assessment": "breach",
+          "step_number": 4,
+          "traffic_pct": 0.4
+        },
+        "first_phantom_alert": null,
+        "first_shared_noise": {
+          "alert_count": 0,
+          "canary_error_rate": 0.001,
+          "differential_error": 0.0,
+          "differential_p99_ms": 0.0,
+          "public_state_assessment": "noise",
+          "step_number": 2,
+          "traffic_pct": 0.2
+        },
+        "first_warning": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0044,
+          "differential_error": 0.0034,
+          "differential_p99_ms": 42.0,
+          "public_state_assessment": "warning",
+          "step_number": 3,
+          "traffic_pct": 0.3
+        },
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "23": {
+        "final_probe_state": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0513,
+          "differential_error": 0.0503,
+          "differential_p99_ms": 338.0,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0075,
+          "differential_error": 0.0065,
+          "differential_p99_ms": 74.0,
+          "public_state_assessment": "breach",
+          "step_number": 4,
+          "traffic_pct": 0.4
+        },
+        "first_phantom_alert": null,
+        "first_shared_noise": {
+          "alert_count": 0,
+          "canary_error_rate": 0.001,
+          "differential_error": 0.0,
+          "differential_p99_ms": 0.0,
+          "public_state_assessment": "noise",
+          "step_number": 3,
+          "traffic_pct": 0.3
+        },
+        "first_warning": null,
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "3": {
+        "final_probe_state": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0417,
+          "differential_error": 0.0407,
+          "differential_p99_ms": 290.0,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0072,
+          "differential_error": 0.0062,
+          "differential_p99_ms": 70.0,
+          "public_state_assessment": "breach",
+          "step_number": 5,
+          "traffic_pct": 0.5
+        },
+        "first_phantom_alert": null,
+        "first_shared_noise": {
+          "alert_count": 0,
+          "canary_error_rate": 0.001,
+          "differential_error": 0.0,
+          "differential_p99_ms": 0.0,
+          "public_state_assessment": "noise",
+          "step_number": 4,
+          "traffic_pct": 0.4
+        },
+        "first_warning": null,
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "5": {
+        "final_probe_state": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0513,
+          "differential_error": 0.0503,
+          "differential_p99_ms": 338.0,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0075,
+          "differential_error": 0.0065,
+          "differential_p99_ms": 74.0,
+          "public_state_assessment": "breach",
+          "step_number": 4,
+          "traffic_pct": 0.4
+        },
+        "first_phantom_alert": null,
+        "first_shared_noise": {
+          "alert_count": 0,
+          "canary_error_rate": 0.001,
+          "differential_error": 0.0,
+          "differential_p99_ms": 0.0,
+          "public_state_assessment": "noise",
+          "step_number": 3,
+          "traffic_pct": 0.3
+        },
+        "first_warning": null,
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "7": {
+        "final_probe_state": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0616,
+          "differential_error": 0.0606,
+          "differential_p99_ms": 397.0,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0118,
+          "differential_error": 0.0108,
+          "differential_p99_ms": 97.0,
+          "public_state_assessment": "breach",
+          "step_number": 4,
+          "traffic_pct": 0.4
+        },
+        "first_phantom_alert": null,
+        "first_shared_noise": {
+          "alert_count": 0,
+          "canary_error_rate": 0.001,
+          "differential_error": 0.0,
+          "differential_p99_ms": 0.0,
+          "public_state_assessment": "noise",
+          "step_number": 2,
+          "traffic_pct": 0.2
+        },
+        "first_warning": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0044,
+          "differential_error": 0.0034,
+          "differential_p99_ms": 42.0,
+          "public_state_assessment": "warning",
+          "step_number": 3,
+          "traffic_pct": 0.3
+        },
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      }
+    },
+    "medium": {
+      "0": {
+        "final_probe_state": {
+          "alert_count": 1,
+          "canary_error_rate": 0.046,
+          "differential_error": 0.045,
+          "differential_p99_ms": 225.0,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 1,
+          "canary_error_rate": 0.01,
+          "differential_error": 0.009,
+          "differential_p99_ms": 45.0,
+          "public_state_assessment": "breach",
+          "step_number": 4,
+          "traffic_pct": 0.4
+        },
+        "first_phantom_alert": null,
+        "first_shared_noise": null,
+        "first_warning": {
+          "alert_count": 0,
+          "canary_error_rate": 0.004,
+          "differential_error": 0.003,
+          "differential_p99_ms": 15.0,
+          "public_state_assessment": "warning",
+          "step_number": 3,
+          "traffic_pct": 0.3
+        },
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "11": {
+        "final_probe_state": {
+          "alert_count": 1,
+          "canary_error_rate": 0.04642,
+          "differential_error": 0.04542,
+          "differential_p99_ms": 192.5,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 1,
+          "canary_error_rate": 0.00742,
+          "differential_error": 0.00642,
+          "differential_p99_ms": 27.5,
+          "public_state_assessment": "breach",
+          "step_number": 4,
+          "traffic_pct": 0.4
+        },
+        "first_phantom_alert": null,
+        "first_shared_noise": null,
+        "first_warning": null,
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "13": {
+        "final_probe_state": {
+          "alert_count": 1,
+          "canary_error_rate": 0.045,
+          "differential_error": 0.044,
+          "differential_p99_ms": 240.0,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0065,
+          "differential_error": 0.0055,
+          "differential_p99_ms": 30.0,
+          "public_state_assessment": "breach",
+          "step_number": 3,
+          "traffic_pct": 0.3
+        },
+        "first_phantom_alert": null,
+        "first_shared_noise": null,
+        "first_warning": null,
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "19": {
+        "final_probe_state": {
+          "alert_count": 1,
+          "canary_error_rate": 0.045,
+          "differential_error": 0.044,
+          "differential_p99_ms": 240.0,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0065,
+          "differential_error": 0.0055,
+          "differential_p99_ms": 30.0,
+          "public_state_assessment": "breach",
+          "step_number": 3,
+          "traffic_pct": 0.3
+        },
+        "first_phantom_alert": null,
+        "first_shared_noise": null,
+        "first_warning": null,
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "23": {
+        "final_probe_state": {
+          "alert_count": 1,
+          "canary_error_rate": 0.04642,
+          "differential_error": 0.04542,
+          "differential_p99_ms": 192.5,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 1,
+          "canary_error_rate": 0.00742,
+          "differential_error": 0.00642,
+          "differential_p99_ms": 27.5,
+          "public_state_assessment": "breach",
+          "step_number": 4,
+          "traffic_pct": 0.4
+        },
+        "first_phantom_alert": null,
+        "first_shared_noise": null,
+        "first_warning": null,
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "3": {
+        "final_probe_state": {
+          "alert_count": 1,
+          "canary_error_rate": 0.04608,
+          "differential_error": 0.04508,
+          "differential_p99_ms": 243.75,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 1,
+          "canary_error_rate": 0.01008,
+          "differential_error": 0.00908,
+          "differential_p99_ms": 48.75,
+          "public_state_assessment": "breach",
+          "step_number": 4,
+          "traffic_pct": 0.4
+        },
+        "first_phantom_alert": null,
+        "first_shared_noise": null,
+        "first_warning": {
+          "alert_count": 0,
+          "canary_error_rate": 0.00408,
+          "differential_error": 0.00308,
+          "differential_p99_ms": 16.25,
+          "public_state_assessment": "warning",
+          "step_number": 3,
+          "traffic_pct": 0.3
+        },
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "5": {
+        "final_probe_state": {
+          "alert_count": 1,
+          "canary_error_rate": 0.04642,
+          "differential_error": 0.04542,
+          "differential_p99_ms": 192.5,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 1,
+          "canary_error_rate": 0.00742,
+          "differential_error": 0.00642,
+          "differential_p99_ms": 27.5,
+          "public_state_assessment": "breach",
+          "step_number": 4,
+          "traffic_pct": 0.4
+        },
+        "first_phantom_alert": null,
+        "first_shared_noise": null,
+        "first_warning": null,
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "7": {
+        "final_probe_state": {
+          "alert_count": 1,
+          "canary_error_rate": 0.045,
+          "differential_error": 0.044,
+          "differential_p99_ms": 240.0,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 1,
+          "canary_error_rate": 0.0065,
+          "differential_error": 0.0055,
+          "differential_p99_ms": 30.0,
+          "public_state_assessment": "breach",
+          "step_number": 3,
+          "traffic_pct": 0.3
+        },
+        "first_phantom_alert": null,
+        "first_shared_noise": null,
+        "first_warning": null,
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      }
+    },
+    "recovery": {
+      "0": {
+        "final_probe_state": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0012,
+          "differential_error": 0.0002,
+          "differential_p99_ms": 6.0,
+          "public_state_assessment": "healthy",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": null,
+        "first_phantom_alert": null,
+        "first_shared_noise": null,
+        "first_warning": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0027,
+          "differential_error": 0.0017,
+          "differential_p99_ms": 33.0,
+          "public_state_assessment": "warning",
+          "step_number": 3,
+          "traffic_pct": 0.3
+        },
+        "recovery_clear": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0012,
+          "differential_error": 0.0002,
+          "differential_p99_ms": 6.0,
+          "public_state_assessment": "healthy",
+          "step_number": 4,
+          "traffic_pct": 0.4
+        },
+        "trace_steps_captured": 10
+      },
+      "11": {
+        "final_probe_state": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0011,
+          "differential_error": 0.0001,
+          "differential_p99_ms": 10.0,
+          "public_state_assessment": "healthy",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": null,
+        "first_phantom_alert": null,
+        "first_shared_noise": null,
+        "first_warning": null,
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "13": {
+        "final_probe_state": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0012,
+          "differential_error": 0.0002,
+          "differential_p99_ms": 8.0,
+          "public_state_assessment": "healthy",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": null,
+        "first_phantom_alert": null,
+        "first_shared_noise": null,
+        "first_warning": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0025,
+          "differential_error": 0.0015,
+          "differential_p99_ms": 39.0,
+          "public_state_assessment": "warning",
+          "step_number": 4,
+          "traffic_pct": 0.4
+        },
+        "recovery_clear": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0012,
+          "differential_error": 0.0002,
+          "differential_p99_ms": 8.0,
+          "public_state_assessment": "healthy",
+          "step_number": 5,
+          "traffic_pct": 0.5
+        },
+        "trace_steps_captured": 10
+      },
+      "19": {
+        "final_probe_state": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0012,
+          "differential_error": 0.0002,
+          "differential_p99_ms": 8.0,
+          "public_state_assessment": "healthy",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": null,
+        "first_phantom_alert": null,
+        "first_shared_noise": null,
+        "first_warning": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0025,
+          "differential_error": 0.0015,
+          "differential_p99_ms": 39.0,
+          "public_state_assessment": "warning",
+          "step_number": 4,
+          "traffic_pct": 0.4
+        },
+        "recovery_clear": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0012,
+          "differential_error": 0.0002,
+          "differential_p99_ms": 8.0,
+          "public_state_assessment": "healthy",
+          "step_number": 5,
+          "traffic_pct": 0.5
+        },
+        "trace_steps_captured": 10
+      },
+      "23": {
+        "final_probe_state": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0011,
+          "differential_error": 0.0001,
+          "differential_p99_ms": 10.0,
+          "public_state_assessment": "healthy",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": null,
+        "first_phantom_alert": null,
+        "first_shared_noise": null,
+        "first_warning": null,
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "3": {
+        "final_probe_state": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0013,
+          "differential_error": 0.0003,
+          "differential_p99_ms": 6.0,
+          "public_state_assessment": "healthy",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": null,
+        "first_phantom_alert": null,
+        "first_shared_noise": null,
+        "first_warning": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0027,
+          "differential_error": 0.0017,
+          "differential_p99_ms": 25.0,
+          "public_state_assessment": "warning",
+          "step_number": 3,
+          "traffic_pct": 0.3
+        },
+        "recovery_clear": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0013,
+          "differential_error": 0.0003,
+          "differential_p99_ms": 6.0,
+          "public_state_assessment": "healthy",
+          "step_number": 5,
+          "traffic_pct": 0.5
+        },
+        "trace_steps_captured": 10
+      },
+      "5": {
+        "final_probe_state": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0011,
+          "differential_error": 0.0001,
+          "differential_p99_ms": 10.0,
+          "public_state_assessment": "healthy",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": null,
+        "first_phantom_alert": null,
+        "first_shared_noise": null,
+        "first_warning": null,
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "7": {
+        "final_probe_state": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0012,
+          "differential_error": 0.0002,
+          "differential_p99_ms": 8.0,
+          "public_state_assessment": "healthy",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": null,
+        "first_phantom_alert": null,
+        "first_shared_noise": null,
+        "first_warning": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0025,
+          "differential_error": 0.0015,
+          "differential_p99_ms": 39.0,
+          "public_state_assessment": "warning",
+          "step_number": 4,
+          "traffic_pct": 0.4
+        },
+        "recovery_clear": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0012,
+          "differential_error": 0.0002,
+          "differential_p99_ms": 8.0,
+          "public_state_assessment": "healthy",
+          "step_number": 5,
+          "traffic_pct": 0.5
+        },
+        "trace_steps_captured": 10
+      }
+    },
+    "silent": {
+      "0": {
+        "final_probe_state": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0104,
+          "differential_error": 0.0094,
+          "differential_p99_ms": 196.0,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 0,
+          "canary_error_rate": 0.00315,
+          "differential_error": 0.00215,
+          "differential_p99_ms": 68.0,
+          "public_state_assessment": "breach",
+          "step_number": 4,
+          "traffic_pct": 0.4
+        },
+        "first_phantom_alert": null,
+        "first_shared_noise": null,
+        "first_warning": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0018,
+          "differential_error": 0.0008,
+          "differential_p99_ms": 24.0,
+          "public_state_assessment": "warning",
+          "step_number": 3,
+          "traffic_pct": 0.3
+        },
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "11": {
+        "final_probe_state": {
+          "alert_count": 0,
+          "canary_error_rate": 0.022,
+          "differential_error": 0.021,
+          "differential_p99_ms": 186.4,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0054,
+          "differential_error": 0.0044,
+          "differential_p99_ms": 82.0,
+          "public_state_assessment": "breach",
+          "step_number": 5,
+          "traffic_pct": 0.5
+        },
+        "first_phantom_alert": null,
+        "first_shared_noise": null,
+        "first_warning": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0028,
+          "differential_error": 0.0018,
+          "differential_p99_ms": 24.0,
+          "public_state_assessment": "warning",
+          "step_number": 3,
+          "traffic_pct": 0.3
+        },
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "13": {
+        "final_probe_state": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0253,
+          "differential_error": 0.0243,
+          "differential_p99_ms": 206.0,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0052,
+          "differential_error": 0.0042,
+          "differential_p99_ms": 72.0,
+          "public_state_assessment": "breach",
+          "step_number": 4,
+          "traffic_pct": 0.4
+        },
+        "first_phantom_alert": null,
+        "first_shared_noise": null,
+        "first_warning": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0024,
+          "differential_error": 0.0014,
+          "differential_p99_ms": 28.0,
+          "public_state_assessment": "warning",
+          "step_number": 3,
+          "traffic_pct": 0.3
+        },
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "19": {
+        "final_probe_state": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0223,
+          "differential_error": 0.0213,
+          "differential_p99_ms": 202.0,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0056,
+          "differential_error": 0.0046,
+          "differential_p99_ms": 80.0,
+          "public_state_assessment": "breach",
+          "step_number": 5,
+          "traffic_pct": 0.5
+        },
+        "first_phantom_alert": null,
+        "first_shared_noise": null,
+        "first_warning": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0024,
+          "differential_error": 0.0014,
+          "differential_p99_ms": 28.0,
+          "public_state_assessment": "warning",
+          "step_number": 3,
+          "traffic_pct": 0.3
+        },
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "23": {
+        "final_probe_state": {
+          "alert_count": 0,
+          "canary_error_rate": 0.022,
+          "differential_error": 0.021,
+          "differential_p99_ms": 186.4,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0054,
+          "differential_error": 0.0044,
+          "differential_p99_ms": 82.0,
+          "public_state_assessment": "breach",
+          "step_number": 5,
+          "traffic_pct": 0.5
+        },
+        "first_phantom_alert": null,
+        "first_shared_noise": null,
+        "first_warning": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0028,
+          "differential_error": 0.0018,
+          "differential_p99_ms": 24.0,
+          "public_state_assessment": "warning",
+          "step_number": 3,
+          "traffic_pct": 0.3
+        },
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "3": {
+        "final_probe_state": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0226,
+          "differential_error": 0.0216,
+          "differential_p99_ms": 185.2,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0052,
+          "differential_error": 0.0042,
+          "differential_p99_ms": 72.0,
+          "public_state_assessment": "breach",
+          "step_number": 5,
+          "traffic_pct": 0.5
+        },
+        "first_phantom_alert": null,
+        "first_shared_noise": null,
+        "first_warning": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0026,
+          "differential_error": 0.0016,
+          "differential_p99_ms": 20.0,
+          "public_state_assessment": "warning",
+          "step_number": 3,
+          "traffic_pct": 0.3
+        },
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "5": {
+        "final_probe_state": {
+          "alert_count": 0,
+          "canary_error_rate": 0.025,
+          "differential_error": 0.024,
+          "differential_p99_ms": 192.0,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 0,
+          "canary_error_rate": 0.005,
+          "differential_error": 0.004,
+          "differential_p99_ms": 70.0,
+          "public_state_assessment": "breach",
+          "step_number": 4,
+          "traffic_pct": 0.4
+        },
+        "first_phantom_alert": null,
+        "first_shared_noise": null,
+        "first_warning": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0028,
+          "differential_error": 0.0018,
+          "differential_p99_ms": 24.0,
+          "public_state_assessment": "warning",
+          "step_number": 3,
+          "traffic_pct": 0.3
+        },
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      },
+      "7": {
+        "final_probe_state": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0223,
+          "differential_error": 0.0213,
+          "differential_p99_ms": 202.0,
+          "public_state_assessment": "breach",
+          "step_number": 10,
+          "traffic_pct": 1.0
+        },
+        "first_breach": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0056,
+          "differential_error": 0.0046,
+          "differential_p99_ms": 80.0,
+          "public_state_assessment": "breach",
+          "step_number": 5,
+          "traffic_pct": 0.5
+        },
+        "first_phantom_alert": null,
+        "first_shared_noise": null,
+        "first_warning": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0024,
+          "differential_error": 0.0014,
+          "differential_p99_ms": 28.0,
+          "public_state_assessment": "warning",
+          "step_number": 3,
+          "traffic_pct": 0.3
+        },
+        "recovery_clear": null,
+        "trace_steps_captured": 10
+      }
+    }
+  }
+}

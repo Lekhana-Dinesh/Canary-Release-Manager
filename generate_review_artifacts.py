@@ -26,24 +26,39 @@ if __package__ in (None, ""):
         from server.policies import (
             baseline_action,
             observation_has_actual_breach,
+            observation_is_phantom_alert,
+            observation_is_shared_noise,
+            observation_is_warning_window,
             safe_fallback_action,
+            state_assessment_for_observation,
         )
+        from server.scenarios import PUBLIC_TASK_IDS
     except ModuleNotFoundError:
         from canary_release_env.models import CanaryAction, CanaryObservation
         from canary_release_env.server.canary_environment import CanaryEnvironment
         from canary_release_env.server.policies import (
             baseline_action,
             observation_has_actual_breach,
+            observation_is_phantom_alert,
+            observation_is_shared_noise,
+            observation_is_warning_window,
             safe_fallback_action,
+            state_assessment_for_observation,
         )
+        from canary_release_env.server.scenarios import PUBLIC_TASK_IDS
 else:
     from canary_release_env.models import CanaryAction, CanaryObservation
     from canary_release_env.server.canary_environment import CanaryEnvironment
     from canary_release_env.server.policies import (
         baseline_action,
         observation_has_actual_breach,
+        observation_is_phantom_alert,
+        observation_is_shared_noise,
+        observation_is_warning_window,
         safe_fallback_action,
+        state_assessment_for_observation,
     )
+    from canary_release_env.server.scenarios import PUBLIC_TASK_IDS
 
 ROOT = Path(__file__).resolve().parent
 DEFAULT_OUTPUT_DIR = ROOT / "review_artifacts"
@@ -56,7 +71,14 @@ ARTIFACT_FILENAMES = {
     "aggressive_grader": "hard_aggressive_grader.json",
     "watch_window_transcript": "hard_watch_window_hold_transcript.json",
     "watch_window_grader": "hard_watch_window_hold_grader.json",
+    "expert_transcript": "expert_cautious_transcript.json",
+    "expert_grader": "expert_phantom_hold_grader.json",
+    "recovery_transcript": "recovery_cautious_transcript.json",
+    "recovery_grader": "recovery_transient_hold_grader.json",
     "benchmark": "policy_benchmark_results.json",
+    "seed_sweep": "policy_seed_sweep_results.json",
+    "variant_catalog": "scenario_variant_catalog.json",
+    "validation": "openenv_validation_results.json",
     "endpoint_sample": "endpoint_contract_sample.json",
     "manifest": "artifact_manifest.json",
     "index": "artifact_index.md",
@@ -76,13 +98,20 @@ LEGACY_ARTIFACT_FILENAMES = {
     "local_server.log",
 }
 MANAGED_ARTIFACT_FILENAMES = set(ARTIFACT_FILENAMES.values()) | LEGACY_ARTIFACT_FILENAMES
+BENCHMARK_SEEDS = (0, 3, 5, 7, 11, 13, 19, 23)
 
 
-def make_action(action_type: str, reasoning: str, breach: bool) -> dict[str, Any]:
+def make_action(
+    action_type: str,
+    reasoning: str,
+    breach: bool,
+    state_assessment: str,
+) -> dict[str, Any]:
     return {
         "action_type": action_type,
         "reasoning": reasoning,
         "slo_breach_detected": breach,
+        "state_assessment": state_assessment,
     }
 
 
@@ -91,31 +120,37 @@ GOOD_HARD_ACTIONS = [
         "increase_10",
         "Metrics are healthy with low error and no differential latency, so take the standard 10% promotion step.",
         False,
+        "healthy",
     ),
     make_action(
         "increase_10",
         "Stable and canary remain aligned with healthy metrics, so continue the rollout by another 10%.",
         False,
+        "healthy",
     ),
     make_action(
         "increase_10",
         "The canary still matches stable performance, so increase traffic by 10% again.",
         False,
+        "healthy",
     ),
     make_action(
         "hold",
         "Stable and canary latencies spiked together with no differential gap, so hold for confirmation.",
         False,
+        "noise",
     ),
     make_action(
         "hold",
         "The canary remains slower than stable after the shared-noise event, so hold through the watch window.",
         False,
+        "warning",
     ),
     make_action(
         "rollback",
         "The canary now breaches the differential guardrail, so rollback immediately.",
         True,
+        "breach",
     ),
 ]
 
@@ -125,11 +160,13 @@ BAD_HARD_ACTIONS = [
         "increase_10",
         "The canary has not breached yet and more traffic should make the signal clearer, so increase by 10%.",
         False,
+        "warning",
     ),
     make_action(
         "rollback",
         "The canary is now breaching and should be rolled back.",
         True,
+        "breach",
     ),
 ]
 
@@ -138,6 +175,7 @@ AMBIGUOUS_WATCH_ACTION = make_action(
     "hold",
     "The canary is still slower than stable after the shared-noise event, so hold for one more confirmation step.",
     False,
+    "warning",
 )
 
 
@@ -292,7 +330,7 @@ def _run_policy_episode_via_http(
     episode_id = created["episode_id"]
     observation = CanaryObservation.model_validate(created["observation"])
 
-    while not observation.is_done:
+    while not observation.done:
         action = policy_fn(observation)
         response = _http_json(
             base_url,
@@ -361,6 +399,31 @@ def _run_inference_sample(base_url: str, output_dir: Path) -> None:
     _write_text(output_dir / ARTIFACT_FILENAMES["inference_stdout"], completed.stdout)
 
 
+def _run_openenv_validate(*args: str) -> dict[str, Any]:
+    completed = subprocess.run(
+        [sys.executable, "-m", "openenv.cli", "validate", *args],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    stdout = completed.stdout.strip()
+    stderr = completed.stderr.strip()
+    payload: dict[str, Any] = {
+        "command": " ".join(["python", "-m", "openenv.cli", "validate", *args]),
+        "returncode": completed.returncode,
+        "stdout": stdout,
+        "stderr": stderr,
+        "passed": completed.returncode == 0,
+    }
+    if stdout.startswith("{"):
+        try:
+            payload["parsed_stdout"] = json.loads(stdout)
+        except json.JSONDecodeError:
+            payload["parsed_stdout"] = None
+    return payload
+
+
 def _find_transcript_entry(
     episode: dict[str, Any],
     *,
@@ -372,15 +435,134 @@ def _find_transcript_entry(
     return episode["transcript"][-1]
 
 
+def _probe_rollout_trace(task_id: str, seed: int, max_steps: int = 10) -> list[CanaryObservation]:
+    env = CanaryEnvironment()
+    observation = env.reset(task=task_id, seed=seed)
+    trace = [observation]
+
+    while not observation.done and observation.step_number < max_steps:
+        observation = env.step(
+            CanaryAction(
+                action_type="increase_10",
+                reasoning=(
+                    "Probe rollout used only to surface deterministic event timing and signal shapes."
+                ),
+                slo_breach_detected=False,
+                state_assessment=state_assessment_for_observation(observation),
+            )
+        )
+        trace.append(observation)
+
+    return trace
+
+
+def _first_matching_observation(
+    trace: list[CanaryObservation],
+    predicate: Callable[[CanaryObservation], bool],
+) -> CanaryObservation | None:
+    for observation in trace[1:]:
+        if predicate(observation):
+            return observation
+    return None
+
+
+def _observation_signature(observation: CanaryObservation | None) -> dict[str, Any] | None:
+    if observation is None:
+        return None
+    return {
+        "step_number": int(observation.step_number),
+        "traffic_pct": round(float(observation.traffic_pct), 4),
+        "canary_error_rate": round(float(observation.canary_error_rate), 6),
+        "differential_error": round(float(observation.differential_error), 6),
+        "differential_p99_ms": round(float(observation.differential_p99_ms), 2),
+        "alert_count": int(observation.alert_count),
+        "public_state_assessment": state_assessment_for_observation(observation),
+    }
+
+
+def _variant_catalog_entry(task_id: str, seed: int) -> dict[str, Any]:
+    trace = _probe_rollout_trace(task_id, seed)
+    first_warning = _first_matching_observation(trace, observation_is_warning_window)
+    first_noise = _first_matching_observation(trace, observation_is_shared_noise)
+    first_phantom = _first_matching_observation(trace, observation_is_phantom_alert)
+    first_breach = _first_matching_observation(trace, observation_has_actual_breach)
+
+    recovery_clear = None
+    if first_warning is not None:
+        for observation in trace:
+            if observation.step_number <= first_warning.step_number:
+                continue
+            if (
+                state_assessment_for_observation(observation) == "healthy"
+                and not observation_has_actual_breach(observation)
+            ):
+                recovery_clear = observation
+                break
+
+    return {
+        "trace_steps_captured": len(trace) - 1,
+        "first_warning": _observation_signature(first_warning),
+        "first_shared_noise": _observation_signature(first_noise),
+        "first_phantom_alert": _observation_signature(first_phantom),
+        "first_breach": _observation_signature(first_breach),
+        "recovery_clear": _observation_signature(recovery_clear),
+        "final_probe_state": _observation_signature(trace[-1]),
+    }
+
+
+def scenario_variant_catalog(seeds: tuple[int, ...] = BENCHMARK_SEEDS) -> dict[str, Any]:
+    tasks: dict[str, dict[str, Any]] = {}
+    summaries: dict[str, dict[str, Any]] = {}
+
+    for task_id in PUBLIC_TASK_IDS:
+        per_seed = {
+            str(seed): _variant_catalog_entry(task_id, seed)
+            for seed in seeds
+        }
+        tasks[task_id] = per_seed
+
+        def _distinct_steps(field_name: str) -> list[int]:
+            return sorted(
+                {
+                    entry[field_name]["step_number"]
+                    for entry in per_seed.values()
+                    if entry[field_name] is not None
+                }
+            )
+
+        summaries[task_id] = {
+            "distinct_warning_steps": _distinct_steps("first_warning"),
+            "distinct_noise_steps": _distinct_steps("first_shared_noise"),
+            "distinct_phantom_steps": _distinct_steps("first_phantom_alert"),
+            "distinct_breach_steps": _distinct_steps("first_breach"),
+            "distinct_recovery_clear_steps": _distinct_steps("recovery_clear"),
+        }
+
+    return {
+        "probe_policy": (
+            "Deterministic fixed 10% promotions used only to surface event ordering and signal shape diversity; this is not a benchmark policy."
+        ),
+        "seeds": list(seeds),
+        "tasks": tasks,
+        "task_summaries": summaries,
+    }
+
+
 def _build_artifact_manifest(
     *,
     benchmark_results: dict[str, Any],
+    seed_sweep_results: dict[str, Any],
+    validation_results: dict[str, Any],
     cautious_episode: dict[str, Any],
     cautious_grader: dict[str, Any],
     aggressive_episode: dict[str, Any],
     aggressive_grader: dict[str, Any],
     watch_window_episode: dict[str, Any],
     watch_window_grader: dict[str, Any],
+    expert_episode: dict[str, Any],
+    expert_grader: dict[str, Any],
+    recovery_episode: dict[str, Any],
+    recovery_grader: dict[str, Any],
 ) -> dict[str, Any]:
     cautious_hard_score = benchmark_results["policies"]["cautious_policy"]["scores"]["hard"]
     return {
@@ -491,12 +673,95 @@ def _build_artifact_manifest(
                 "score_note": "This is a single-step grader score for the hold decision on the hard watch window.",
             },
             {
+                "filename": ARTIFACT_FILENAMES["expert_transcript"],
+                "artifact_kind": "transcript",
+                "policy": "cautious_policy",
+                "task_id": "expert",
+                "run_scope": "full_episode",
+                "paired_with": ARTIFACT_FILENAMES["expert_grader"],
+                "why_it_exists": "Full expert-task run showing that the cautious policy ignores the phantom alert and later rolls back on the real differential breach.",
+                "score_observed": expert_episode["episode_score"],
+                "score_note": "This is a completed expert-task episode from the cautious policy.",
+            },
+            {
+                "filename": ARTIFACT_FILENAMES["expert_grader"],
+                "artifact_kind": "grader_payload",
+                "policy": "cautious_policy",
+                "task_id": "expert",
+                "run_scope": "single_step",
+                "paired_with": ARTIFACT_FILENAMES["expert_transcript"],
+                "why_it_exists": "Single-step proof that the phantom alert is rewarded when the agent verifies metrics instead of rolling back.",
+                "score_observed": expert_grader["total_score"],
+                "score_note": "This is the phantom-alert hold decision score, not a full-episode score.",
+            },
+            {
+                "filename": ARTIFACT_FILENAMES["recovery_transcript"],
+                "artifact_kind": "transcript",
+                "policy": "cautious_policy",
+                "task_id": "recovery",
+                "run_scope": "full_episode",
+                "paired_with": ARTIFACT_FILENAMES["recovery_grader"],
+                "why_it_exists": "Full recovery-task run showing that the cautious policy holds through a transient canary-only degradation and then continues the rollout safely.",
+                "score_observed": recovery_episode["episode_score"],
+                "score_note": "This is a completed recovery-task episode from the cautious policy.",
+            },
+            {
+                "filename": ARTIFACT_FILENAMES["recovery_grader"],
+                "artifact_kind": "grader_payload",
+                "policy": "cautious_policy",
+                "task_id": "recovery",
+                "run_scope": "single_step",
+                "paired_with": ARTIFACT_FILENAMES["recovery_transcript"],
+                "why_it_exists": "Single-step proof that a transient canary-only degradation is rewarded as a hold, not a rollback.",
+                "score_observed": recovery_grader["total_score"],
+                "score_note": "This is the transient-recovery hold decision score, not a full-episode score.",
+            },
+            {
                 "filename": ARTIFACT_FILENAMES["benchmark"],
                 "artifact_kind": "benchmark_comparison",
                 "policy": "multiple",
-                "task_id": "easy,medium,hard",
+                "task_id": "easy,medium,hard,expert,recovery,silent",
                 "run_scope": "full_episode",
                 "why_it_exists": "Compares shallow baseline, cautious policy, and aggressive policy across all tasks.",
+            },
+            {
+                "filename": ARTIFACT_FILENAMES["seed_sweep"],
+                "artifact_kind": "benchmark_comparison",
+                "policy": "multiple",
+                "task_id": "easy,medium,hard,expert,recovery,silent",
+                "run_scope": "multi_seed",
+                "why_it_exists": (
+                    "Shows that the main policy ordering remains coherent across deterministic non-zero seeds, "
+                    "not just the canonical seed=0 profiles."
+                ),
+                "score_observed": {
+                    "aggregate_hard_ordering": seed_sweep_results["aggregate_hard_ordering"],
+                    "aggregate_expert_ordering": seed_sweep_results["aggregate_expert_ordering"],
+                    "aggregate_recovery_ordering": seed_sweep_results["aggregate_recovery_ordering"],
+                    "aggregate_silent_ordering": seed_sweep_results["aggregate_silent_ordering"],
+                },
+                "score_note": "Aggregate scores are the mean completed-episode scores across the documented benchmark seeds.",
+            },
+            {
+                "filename": ARTIFACT_FILENAMES["variant_catalog"],
+                "artifact_kind": "variant_catalog",
+                "policy": "deterministic_probe",
+                "task_id": "easy,medium,hard,expert,recovery,silent",
+                "run_scope": "multi_seed",
+                "why_it_exists": "Enumerates event ordering and signal-shape differences across deterministic seeds so reviewers can inspect task-family breadth directly.",
+            },
+            {
+                "filename": ARTIFACT_FILENAMES["validation"],
+                "artifact_kind": "validation_capture",
+                "policy": None,
+                "task_id": None,
+                "run_scope": "structural_and_live_validation",
+                "why_it_exists": "Captures structural OpenEnv validation and live local-server validation from the generated artifact run.",
+                "score_observed": {
+                    "structural_passed": validation_results["structural"]["passed"],
+                    "live_passed": validation_results["live"]["passed"],
+                },
+                "score_note": "These are validator compatibility proofs, not benchmark scores.",
             },
             {
                 "filename": ARTIFACT_FILENAMES["endpoint_sample"],
@@ -504,7 +769,7 @@ def _build_artifact_manifest(
                 "policy": None,
                 "task_id": None,
                 "run_scope": "contract_sample",
-                "why_it_exists": "Shows representative health, task, and baseline endpoint responses.",
+                "why_it_exists": "Shows representative validator-safe endpoints plus the recommended /episodes HTTP flow.",
             },
             {
                 "filename": ARTIFACT_FILENAMES["audit"],
@@ -527,16 +792,25 @@ def _artifact_index(markdown_manifest: dict[str, Any]) -> str:
         "## Quick Read Order",
         "",
         f"- `{ARTIFACT_FILENAMES['index']}`: this reviewer guide.",
-        f"- `{ARTIFACT_FILENAMES['benchmark']}`: final cross-policy comparison across easy, medium, and hard.",
+        f"- `{ARTIFACT_FILENAMES['benchmark']}`: final seed=0 cross-policy comparison across easy, medium, hard, expert, recovery, and silent.",
+        f"- `{ARTIFACT_FILENAMES['seed_sweep']}`: deterministic multi-seed comparison that proves the ordering is not tied to one authored trace.",
+        f"- `{ARTIFACT_FILENAMES['variant_catalog']}`: machine-readable event catalog showing how seed variants change warning, noise, phantom, recovery, and breach timing.",
+        f"- `{ARTIFACT_FILENAMES['validation']}`: structural and live OpenEnv validation results captured from this tree.",
         f"- `{ARTIFACT_FILENAMES['cautious_transcript']}`: full hard-task run from the cautious policy.",
+        f"- `{ARTIFACT_FILENAMES['expert_transcript']}`: full expert-task run showing phantom-alert handling.",
+        f"- `{ARTIFACT_FILENAMES['recovery_transcript']}`: full recovery-task run showing transient degradation handling.",
         f"- `{ARTIFACT_FILENAMES['aggressive_grader']}`: single-step proof of the aggressive policy's watch-window mistake.",
+        f"- `{ARTIFACT_FILENAMES['expert_grader']}`: single-step proof that the expert phantom alert is not a rollback.",
+        f"- `{ARTIFACT_FILENAMES['recovery_grader']}`: single-step proof that the recovery warning window rewards holding.",
         f"- `{ARTIFACT_FILENAMES['inference_stdout']}`: strict inference stdout contract sample.",
         "",
         "## Score Interpretation",
         "",
         "- `episode_score` means normalized running-average score across decisions taken so far.",
         "- `total_score` in a grader artifact means a single decision score from `POST /grader`.",
-        "- `policy_benchmark_results.json` reports completed-episode scores for named policies.",
+        "- `policy_benchmark_results.json` reports completed-episode scores for named policies across all public tasks.",
+        "- `policy_seed_sweep_results.json` reports the same policy comparison across multiple deterministic seeds and then averages them.",
+        "- `openenv_validation_results.json` records validator outcomes and should not be interpreted as a benchmark score artifact.",
         "- The watch-window transcript is intentionally partial and `in_progress`, so its `episode_score` should not be compared directly with full benchmark averages.",
         "",
         "## Files",
@@ -555,6 +829,7 @@ def _artifact_index(markdown_manifest: dict[str, Any]) -> str:
 
 
 def _aggressive_policy_action(observation) -> CanaryAction:
+    state_assessment = state_assessment_for_observation(observation)
     if observation_has_actual_breach(observation):
         return CanaryAction(
             action_type="rollback",
@@ -563,6 +838,7 @@ def _aggressive_policy_action(observation) -> CanaryAction:
                 f"and differential_p99={observation.differential_p99_ms:.1f}ms, so rollback."
             ),
             slo_breach_detected=True,
+            state_assessment=state_assessment,
         )
 
     action_type = "increase_25" if observation.traffic_pct < 0.50 else "increase_10"
@@ -573,15 +849,22 @@ def _aggressive_policy_action(observation) -> CanaryAction:
             f"so use an aggressive promotion step with differential_p99={observation.differential_p99_ms:.1f}ms."
         ),
         slo_breach_detected=False,
+        state_assessment=state_assessment,
     )
 
 
-def _run_policy_episode(task_id: str, policy_name: str, policy_fn: Callable[[Any], CanaryAction]) -> dict[str, Any]:
+def _run_policy_episode(
+    task_id: str,
+    policy_name: str,
+    policy_fn: Callable[[Any], CanaryAction],
+    *,
+    seed: int = 0,
+) -> dict[str, Any]:
     env = CanaryEnvironment()
-    observation = env.reset(task=task_id)
+    observation = env.reset(task=task_id, seed=seed)
     actions: list[dict[str, Any]] = []
 
-    while not observation.is_done:
+    while not observation.done:
         action = policy_fn(observation)
         actions.append(
             {
@@ -590,6 +873,8 @@ def _run_policy_episode(task_id: str, policy_name: str, policy_fn: Callable[[Any
                 "consecutive_holds": observation.consecutive_holds,
                 "action_type": action.action_type,
                 "reasoning": action.reasoning,
+                "slo_breach_detected": action.slo_breach_detected,
+                "state_assessment": action.state_assessment,
             }
         )
         observation = env.step(action)
@@ -598,6 +883,7 @@ def _run_policy_episode(task_id: str, policy_name: str, policy_fn: Callable[[Any
     return {
         "policy": policy_name,
         "task_id": task_id,
+        "seed": seed,
         "score": episode_result["episode_score"],
         "steps": episode_result["steps"],
         "outcome": episode_result["outcome"],
@@ -624,11 +910,11 @@ def benchmark_policies() -> dict[str, Any]:
         ),
     }
 
-    tasks = ("easy", "medium", "hard")
+    tasks = PUBLIC_TASK_IDS
     policy_results: dict[str, Any] = {}
     for policy_name, (description, policy_fn) in policies.items():
         per_task = {
-            task_id: _run_policy_episode(task_id, policy_name, policy_fn)
+            task_id: _run_policy_episode(task_id, policy_name, policy_fn, seed=0)
             for task_id in tasks
         }
         scores = {task_id: per_task[task_id]["score"] for task_id in tasks}
@@ -652,12 +938,120 @@ def benchmark_policies() -> dict[str, Any]:
             key=lambda name: policy_results[name]["scores"]["hard"],
             reverse=True,
         ),
+        "recovery_task_ordering": sorted(
+            policy_results,
+            key=lambda name: policy_results[name]["scores"]["recovery"],
+            reverse=True,
+        ),
+        "silent_task_ordering": sorted(
+            policy_results,
+            key=lambda name: policy_results[name]["scores"]["silent"],
+            reverse=True,
+        ),
+    }
+
+
+def benchmark_seed_sweep(seeds: tuple[int, ...] = BENCHMARK_SEEDS) -> dict[str, Any]:
+    policies: dict[str, tuple[str, Callable[[Any], CanaryAction]]] = {
+        "shallow_baseline": (
+            "Deterministic benchmark baseline that ignores warning windows.",
+            baseline_action,
+        ),
+        "cautious_policy": (
+            "Safer observation-aware policy used as the inference fallback.",
+            safe_fallback_action,
+        ),
+        "aggressive_policy": (
+            "Intentionally overconfident policy that promotes hard and medium cases too aggressively.",
+            _aggressive_policy_action,
+        ),
+    }
+
+    policy_results: dict[str, Any] = {}
+    for policy_name, (description, policy_fn) in policies.items():
+        per_seed: dict[str, Any] = {}
+        aggregate_scores: dict[str, list[float]] = {task_id: [] for task_id in PUBLIC_TASK_IDS}
+
+        for seed in seeds:
+            per_task = {
+                task_id: _run_policy_episode(task_id, policy_name, policy_fn, seed=seed)
+                for task_id in PUBLIC_TASK_IDS
+            }
+            scores = {task_id: per_task[task_id]["score"] for task_id in PUBLIC_TASK_IDS}
+            for task_id, score in scores.items():
+                aggregate_scores[task_id].append(score)
+            per_seed[str(seed)] = {
+                "scores": scores,
+                "average": round(sum(scores.values()) / len(scores), 4),
+                "details": per_task,
+            }
+
+        averaged_scores = {
+            task_id: round(sum(scores) / len(scores), 4)
+            for task_id, scores in aggregate_scores.items()
+        }
+        policy_results[policy_name] = {
+            "description": description,
+            "per_seed": per_seed,
+            "aggregate_scores": averaged_scores,
+            "aggregate_average": round(
+                sum(averaged_scores.values()) / len(averaged_scores),
+                4,
+            ),
+        }
+
+    return {
+        "score_contract": {
+            "per_step_score_range": [0.0, 1.0],
+            "episode_score_range": [0.0, 1.0],
+            "episode_score_definition": "running average of normalized step scores",
+        },
+        "tasks": list(PUBLIC_TASK_IDS),
+        "seeds": list(seeds),
+        "policies": policy_results,
+        "aggregate_hard_ordering": sorted(
+            policy_results,
+            key=lambda name: policy_results[name]["aggregate_scores"]["hard"],
+            reverse=True,
+        ),
+        "aggregate_expert_ordering": sorted(
+            policy_results,
+            key=lambda name: policy_results[name]["aggregate_scores"]["expert"],
+            reverse=True,
+        ),
+        "aggregate_recovery_ordering": sorted(
+            policy_results,
+            key=lambda name: policy_results[name]["aggregate_scores"]["recovery"],
+            reverse=True,
+        ),
+        "aggregate_silent_ordering": sorted(
+            policy_results,
+            key=lambda name: policy_results[name]["aggregate_scores"]["silent"],
+            reverse=True,
+        ),
     }
 
 
 def _generate_endpoint_capture(base_url: str, benchmark_results: dict[str, Any]) -> dict[str, Any]:
     tasks = _http_json(base_url, "/tasks")
     baseline = _http_json(base_url, "/baseline", method="POST", payload={})
+    episode_created = _http_json(
+        base_url,
+        "/episodes",
+        method="POST",
+        payload={"task": "hard", "seed": 0},
+    )
+    episode_observation = CanaryObservation.model_validate(episode_created["observation"])
+    episode_step = _http_json(
+        base_url,
+        f"/episodes/{episode_created['episode_id']}/step",
+        method="POST",
+        payload={
+            "action": safe_fallback_action(episode_observation).model_dump(
+                exclude={"metadata"}
+            )
+        },
+    )
     return {
         "health": _http_json(base_url, "/health"),
         "tasks_summary": {
@@ -672,12 +1066,30 @@ def _generate_endpoint_capture(base_url: str, benchmark_results: dict[str, Any])
             "average": baseline["average"],
             "normalized": baseline["normalized"],
         },
+        "recommended_http_episode_sample": {
+            "create_episode": {
+                "episode_id": "artifact-generated",
+                "episode_context": episode_created["episode_context"],
+                "done": episode_created["done"],
+                "observation": episode_created["observation"],
+            },
+            "first_step": {
+                "reward": episode_step["reward"],
+                "done": episode_step["done"],
+                "evaluation": episode_step["evaluation"],
+                "observation": episode_step["observation"],
+            },
+        },
         "policy_benchmark_hard_ordering": benchmark_results["hard_task_ordering"],
+        "policy_benchmark_recovery_ordering": benchmark_results["recovery_task_ordering"],
+        "policy_benchmark_silent_ordering": benchmark_results["silent_task_ordering"],
     }
 
 
 def _generate_audit_summary(
     benchmark_results: dict[str, Any],
+    seed_sweep_results: dict[str, Any],
+    validation_results: dict[str, Any],
     cautious_episode: dict[str, Any],
     aggressive_episode: dict[str, Any],
     watch_window_grader: dict[str, Any],
@@ -695,15 +1107,44 @@ def _generate_audit_summary(
             "",
             f"- `{ARTIFACT_FILENAMES['inference_stdout']}` shows the strict `[START]`, `[STEP]`, `[END]` stdout contract with no extra lines.",
             f"- `{ARTIFACT_FILENAMES['cautious_transcript']}` captures the full cautious hard-task run used in the benchmark comparison.",
+            f"- `{ARTIFACT_FILENAMES['expert_transcript']}` captures the full cautious expert-task run used to verify phantom-alert handling.",
+            f"- `{ARTIFACT_FILENAMES['recovery_transcript']}` captures the full cautious recovery-task run used to verify transient degradation handling.",
             f"- `{ARTIFACT_FILENAMES['aggressive_transcript']}` captures a hard-task aggressive rollout example that promotes through the watch window and rolls back late.",
+            f"- `{ARTIFACT_FILENAMES['expert_grader']}` isolates the expert phantom-alert hold decision that should score well.",
+            f"- `{ARTIFACT_FILENAMES['recovery_grader']}` isolates the recovery hold decision that should score well without rollback.",
             f"- `{ARTIFACT_FILENAMES['watch_window_grader']}` isolates the watch-window hold decision that makes the hard task meaningfully discriminative.",
-            f"- `{ARTIFACT_FILENAMES['benchmark']}` compares shallow, cautious, and aggressive policies across easy, medium, and hard.",
+            f"- `{ARTIFACT_FILENAMES['benchmark']}` compares shallow, cautious, and aggressive policies across easy, medium, hard, expert, recovery, and silent.",
+            f"- `{ARTIFACT_FILENAMES['seed_sweep']}` shows the same policy ordering across deterministic seeds {', '.join(str(seed) for seed in seed_sweep_results['seeds'])}.",
+            f"- `{ARTIFACT_FILENAMES['variant_catalog']}` exposes how warning, noise, phantom, recovery-clear, and breach timing vary across seeds for every public task family.",
+            f"- `{ARTIFACT_FILENAMES['validation']}` records both structural and live OpenEnv validator results from the same local run.",
+            f"- `{ARTIFACT_FILENAMES['endpoint_sample']}` captures the validator-safe endpoints plus a representative `/episodes` HTTP flow.",
+            "- the grader is now fully structured; free-text reasoning is retained for transcript clarity but does not affect score.",
             "",
             "## Policy Benchmark Snapshot",
             "",
-            f"- shallow baseline: easy={shallow['easy']:.4f}, medium={shallow['medium']:.4f}, hard={shallow['hard']:.4f}",
-            f"- cautious policy: easy={cautious['easy']:.4f}, medium={cautious['medium']:.4f}, hard={cautious['hard']:.4f}",
-            f"- aggressive policy: easy={aggressive['easy']:.4f}, medium={aggressive['medium']:.4f}, hard={aggressive['hard']:.4f}",
+            f"- shallow baseline: easy={shallow['easy']:.4f}, medium={shallow['medium']:.4f}, hard={shallow['hard']:.4f}, expert={shallow['expert']:.4f}, recovery={shallow['recovery']:.4f}, silent={shallow['silent']:.4f}",
+            f"- cautious policy: easy={cautious['easy']:.4f}, medium={cautious['medium']:.4f}, hard={cautious['hard']:.4f}, expert={cautious['expert']:.4f}, recovery={cautious['recovery']:.4f}, silent={cautious['silent']:.4f}",
+            f"- aggressive policy: easy={aggressive['easy']:.4f}, medium={aggressive['medium']:.4f}, hard={aggressive['hard']:.4f}, expert={aggressive['expert']:.4f}, recovery={aggressive['recovery']:.4f}, silent={aggressive['silent']:.4f}",
+            (
+                "- seed-sweep aggregate hard ordering: "
+                + ", ".join(seed_sweep_results["aggregate_hard_ordering"])
+            ),
+            (
+                "- seed-sweep aggregate expert ordering: "
+                + ", ".join(seed_sweep_results["aggregate_expert_ordering"])
+            ),
+            (
+                "- seed-sweep aggregate recovery ordering: "
+                + ", ".join(seed_sweep_results["aggregate_recovery_ordering"])
+            ),
+            (
+                "- seed-sweep aggregate silent ordering: "
+                + ", ".join(seed_sweep_results["aggregate_silent_ordering"])
+            ),
+            (
+                f"- validation summary: structural_passed={validation_results['structural']['passed']} "
+                f"live_passed={validation_results['live']['passed']}"
+            ),
             "",
             "## Hard-Task Contrast",
             "",
@@ -795,16 +1236,68 @@ def generate_review_artifacts(output_dir: Path, env_url: str | None = None) -> d
             ),
         )
 
+        expert_episode, _ = _run_policy_episode_via_http(
+            base_url,
+            task_id="expert",
+            policy_fn=safe_fallback_action,
+        )
+        expert_grader_entry = _find_transcript_entry(
+            expert_episode,
+            preferred_assessments=("correct_phantom_ignore",),
+        )
+        expert_grader = _http_json(
+            base_url,
+            "/grader",
+            method="POST",
+            payload=_build_grader_request(
+                task_id="expert",
+                observation=expert_grader_entry["pre_observation"],
+                action=expert_grader_entry["action"],
+            ),
+        )
+
+        recovery_episode, _ = _run_policy_episode_via_http(
+            base_url,
+            task_id="recovery",
+            policy_fn=safe_fallback_action,
+        )
+        recovery_grader_entry = _find_transcript_entry(
+            recovery_episode,
+            preferred_assessments=("correct_recovery_hold",),
+        )
+        recovery_grader = _http_json(
+            base_url,
+            "/grader",
+            method="POST",
+            payload=_build_grader_request(
+                task_id="recovery",
+                observation=recovery_grader_entry["pre_observation"],
+                action=recovery_grader_entry["action"],
+            ),
+        )
+
         benchmark_results = benchmark_policies()
+        seed_sweep_results = benchmark_seed_sweep()
+        variant_catalog = scenario_variant_catalog()
+        validation_results = {
+            "structural": _run_openenv_validate("."),
+            "live": _run_openenv_validate("--url", base_url),
+        }
         endpoint_capture = _generate_endpoint_capture(base_url, benchmark_results)
         artifact_manifest = _build_artifact_manifest(
             benchmark_results=benchmark_results,
+            seed_sweep_results=seed_sweep_results,
+            validation_results=validation_results,
             cautious_episode=cautious_episode,
             cautious_grader=cautious_grader,
             aggressive_episode=aggressive_episode,
             aggressive_grader=aggressive_grader,
             watch_window_episode=watch_window_episode,
             watch_window_grader=watch_window_grader,
+            expert_episode=expert_episode,
+            expert_grader=expert_grader,
+            recovery_episode=recovery_episode,
+            recovery_grader=recovery_grader,
         )
 
         _write_json(output_dir / ARTIFACT_FILENAMES["cautious_transcript"], cautious_episode)
@@ -813,7 +1306,14 @@ def generate_review_artifacts(output_dir: Path, env_url: str | None = None) -> d
         _write_json(output_dir / ARTIFACT_FILENAMES["aggressive_grader"], aggressive_grader)
         _write_json(output_dir / ARTIFACT_FILENAMES["watch_window_transcript"], watch_window_episode)
         _write_json(output_dir / ARTIFACT_FILENAMES["watch_window_grader"], watch_window_grader)
+        _write_json(output_dir / ARTIFACT_FILENAMES["expert_transcript"], expert_episode)
+        _write_json(output_dir / ARTIFACT_FILENAMES["expert_grader"], expert_grader)
+        _write_json(output_dir / ARTIFACT_FILENAMES["recovery_transcript"], recovery_episode)
+        _write_json(output_dir / ARTIFACT_FILENAMES["recovery_grader"], recovery_grader)
         _write_json(output_dir / ARTIFACT_FILENAMES["benchmark"], benchmark_results)
+        _write_json(output_dir / ARTIFACT_FILENAMES["seed_sweep"], seed_sweep_results)
+        _write_json(output_dir / ARTIFACT_FILENAMES["variant_catalog"], variant_catalog)
+        _write_json(output_dir / ARTIFACT_FILENAMES["validation"], validation_results)
         _write_json(output_dir / ARTIFACT_FILENAMES["endpoint_sample"], endpoint_capture)
         _write_json(output_dir / ARTIFACT_FILENAMES["manifest"], artifact_manifest)
         _write_text(
@@ -824,6 +1324,8 @@ def generate_review_artifacts(output_dir: Path, env_url: str | None = None) -> d
             output_dir / ARTIFACT_FILENAMES["audit"],
             _generate_audit_summary(
                 benchmark_results=benchmark_results,
+                seed_sweep_results=seed_sweep_results,
+                validation_results=validation_results,
                 cautious_episode=cautious_episode,
                 aggressive_episode=aggressive_episode,
                 watch_window_grader=watch_window_grader,

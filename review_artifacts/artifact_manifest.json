@@ -1,0 +1,221 @@
+{
+  "artifacts": [
+    {
+      "artifact_kind": "reviewer_guide",
+      "filename": "artifact_index.md",
+      "policy": null,
+      "run_scope": "documentation",
+      "task_id": null,
+      "why_it_exists": "Human-readable starting point for reviewing the artifact pack."
+    },
+    {
+      "artifact_kind": "manifest",
+      "filename": "artifact_manifest.json",
+      "policy": null,
+      "run_scope": "documentation",
+      "task_id": null,
+      "why_it_exists": "Machine-readable index describing every artifact and its score semantics."
+    },
+    {
+      "artifact_kind": "stdout_sample",
+      "filename": "inference_stdout_fallback_sample.txt",
+      "policy": "fallback_inference_policy",
+      "run_scope": "all_tasks",
+      "task_id": null,
+      "why_it_exists": "Shows the strict inference stdout contract using only [START], [STEP], and [END]."
+    },
+    {
+      "artifact_kind": "transcript",
+      "filename": "hard_cautious_transcript.json",
+      "paired_with": "hard_cautious_grader.json",
+      "policy": "cautious_policy",
+      "run_scope": "full_episode",
+      "score_note": "This full-episode score should match the cautious_policy hard benchmark score (0.9350).",
+      "score_observed": 0.935,
+      "task_id": "hard",
+      "why_it_exists": "Full hard-task run from the cautious policy used in the benchmark comparison."
+    },
+    {
+      "artifact_kind": "grader_payload",
+      "filename": "hard_cautious_grader.json",
+      "paired_with": "hard_cautious_transcript.json",
+      "policy": "cautious_policy",
+      "run_scope": "single_step",
+      "score_note": "This is a single-step grader score, not an episode score.",
+      "score_observed": 1.0,
+      "task_id": "hard",
+      "why_it_exists": "Representative final rollback decision from the cautious hard-task run."
+    },
+    {
+      "artifact_kind": "transcript",
+      "filename": "hard_aggressive_transcript.json",
+      "paired_with": "hard_aggressive_grader.json",
+      "policy": "aggressive_rollout_example",
+      "run_scope": "full_episode",
+      "score_note": "This is a hard-specific illustrative rollout example. It is not the same object as the multi-task `aggressive_policy` comparator in the benchmark results.",
+      "score_observed": 0.8217,
+      "task_id": "hard",
+      "why_it_exists": "Full hard-task aggressive rollout example that promotes through the hard watch window."
+    },
+    {
+      "artifact_kind": "grader_payload",
+      "filename": "hard_aggressive_grader.json",
+      "paired_with": "hard_aggressive_transcript.json",
+      "policy": "aggressive_rollout_example",
+      "run_scope": "single_step",
+      "score_note": "This is the risky watch-window promotion step, not the full-episode score.",
+      "score_observed": 0.27,
+      "task_id": "hard",
+      "why_it_exists": "Captures the aggressive rollout example's signature mistake: promotion during the hard watch window."
+    },
+    {
+      "artifact_kind": "transcript",
+      "filename": "hard_watch_window_hold_transcript.json",
+      "paired_with": "hard_watch_window_hold_grader.json",
+      "policy": "cautious_policy",
+      "run_scope": "partial_episode",
+      "score_note": "This is an in-progress episode score through the watch-window hold, not a completed benchmark score.",
+      "score_observed": 0.928,
+      "task_id": "hard",
+      "why_it_exists": "Shows the hard-task watch window after the hold decision has been taken."
+    },
+    {
+      "artifact_kind": "grader_payload",
+      "filename": "hard_watch_window_hold_grader.json",
+      "paired_with": "hard_watch_window_hold_transcript.json",
+      "policy": "cautious_policy",
+      "run_scope": "single_step",
+      "score_note": "This is a single-step grader score for the hold decision on the hard watch window.",
+      "score_observed": 0.83,
+      "task_id": "hard",
+      "why_it_exists": "Isolates the watch-window hold decision that makes the hard task discriminative."
+    },
+    {
+      "artifact_kind": "transcript",
+      "filename": "expert_cautious_transcript.json",
+      "paired_with": "expert_phantom_hold_grader.json",
+      "policy": "cautious_policy",
+      "run_scope": "full_episode",
+      "score_note": "This is a completed expert-task episode from the cautious policy.",
+      "score_observed": 0.955,
+      "task_id": "expert",
+      "why_it_exists": "Full expert-task run showing that the cautious policy ignores the phantom alert and later rolls back on the real differential breach."
+    },
+    {
+      "artifact_kind": "grader_payload",
+      "filename": "expert_phantom_hold_grader.json",
+      "paired_with": "expert_cautious_transcript.json",
+      "policy": "cautious_policy",
+      "run_scope": "single_step",
+      "score_note": "This is the phantom-alert hold decision score, not a full-episode score.",
+      "score_observed": 0.92,
+      "task_id": "expert",
+      "why_it_exists": "Single-step proof that the phantom alert is rewarded when the agent verifies metrics instead of rolling back."
+    },
+    {
+      "artifact_kind": "transcript",
+      "filename": "recovery_cautious_transcript.json",
+      "paired_with": "recovery_transient_hold_grader.json",
+      "policy": "cautious_policy",
+      "run_scope": "full_episode",
+      "score_note": "This is a completed recovery-task episode from the cautious policy.",
+      "score_observed": 0.9592,
+      "task_id": "recovery",
+      "why_it_exists": "Full recovery-task run showing that the cautious policy holds through a transient canary-only degradation and then continues the rollout safely."
+    },
+    {
+      "artifact_kind": "grader_payload",
+      "filename": "recovery_transient_hold_grader.json",
+      "paired_with": "recovery_cautious_transcript.json",
+      "policy": "cautious_policy",
+      "run_scope": "single_step",
+      "score_note": "This is the transient-recovery hold decision score, not a full-episode score.",
+      "score_observed": 0.84,
+      "task_id": "recovery",
+      "why_it_exists": "Single-step proof that a transient canary-only degradation is rewarded as a hold, not a rollback."
+    },
+    {
+      "artifact_kind": "benchmark_comparison",
+      "filename": "policy_benchmark_results.json",
+      "policy": "multiple",
+      "run_scope": "full_episode",
+      "task_id": "easy,medium,hard,expert,recovery,silent",
+      "why_it_exists": "Compares shallow baseline, cautious policy, and aggressive policy across all tasks."
+    },
+    {
+      "artifact_kind": "benchmark_comparison",
+      "filename": "policy_seed_sweep_results.json",
+      "policy": "multiple",
+      "run_scope": "multi_seed",
+      "score_note": "Aggregate scores are the mean completed-episode scores across the documented benchmark seeds.",
+      "score_observed": {
+        "aggregate_expert_ordering": [
+          "cautious_policy",
+          "shallow_baseline",
+          "aggressive_policy"
+        ],
+        "aggregate_hard_ordering": [
+          "cautious_policy",
+          "shallow_baseline",
+          "aggressive_policy"
+        ],
+        "aggregate_recovery_ordering": [
+          "cautious_policy",
+          "shallow_baseline",
+          "aggressive_policy"
+        ],
+        "aggregate_silent_ordering": [
+          "cautious_policy",
+          "shallow_baseline",
+          "aggressive_policy"
+        ]
+      },
+      "task_id": "easy,medium,hard,expert,recovery,silent",
+      "why_it_exists": "Shows that the main policy ordering remains coherent across deterministic non-zero seeds, not just the canonical seed=0 profiles."
+    },
+    {
+      "artifact_kind": "variant_catalog",
+      "filename": "scenario_variant_catalog.json",
+      "policy": "deterministic_probe",
+      "run_scope": "multi_seed",
+      "task_id": "easy,medium,hard,expert,recovery,silent",
+      "why_it_exists": "Enumerates event ordering and signal-shape differences across deterministic seeds so reviewers can inspect task-family breadth directly."
+    },
+    {
+      "artifact_kind": "validation_capture",
+      "filename": "openenv_validation_results.json",
+      "policy": null,
+      "run_scope": "structural_and_live_validation",
+      "score_note": "These are validator compatibility proofs, not benchmark scores.",
+      "score_observed": {
+        "live_passed": true,
+        "structural_passed": true
+      },
+      "task_id": null,
+      "why_it_exists": "Captures structural OpenEnv validation and live local-server validation from the generated artifact run."
+    },
+    {
+      "artifact_kind": "endpoint_capture",
+      "filename": "endpoint_contract_sample.json",
+      "policy": null,
+      "run_scope": "contract_sample",
+      "task_id": null,
+      "why_it_exists": "Shows representative validator-safe endpoints plus the recommended /episodes HTTP flow."
+    },
+    {
+      "artifact_kind": "summary",
+      "filename": "benchmark_audit_summary.md",
+      "policy": null,
+      "run_scope": "documentation",
+      "task_id": null,
+      "why_it_exists": "Short benchmark-level summary of what the artifact pack proves."
+    }
+  ],
+  "generated_by": "python generate_review_artifacts.py",
+  "score_semantics": {
+    "episode_score": "Normalized running average across all decisions taken so far in an episode.",
+    "grader_total_score": "Normalized score for exactly one decision under POST /grader.",
+    "partial_episode_note": "The watch-window transcript is intentionally in_progress. Its episode_score is a running average through that point, not a completed-policy benchmark average.",
+    "policy_benchmark_score": "Final episode_score for a named policy on a named task."
+  }
+}

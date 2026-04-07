@@ -1,0 +1,129 @@
+{
+  "live": {
+    "command": "python -m openenv.cli validate --url http://127.0.0.1:50362",
+    "parsed_stdout": {
+      "criteria": [
+        {
+          "actual": {
+            "info.version": "1.0.0",
+            "status_code": 200
+          },
+          "description": "GET /openapi.json returns OpenAPI info.version",
+          "expected": {
+            "info.version": "string",
+            "status_code": 200
+          },
+          "id": "openapi_version_available",
+          "passed": true,
+          "required": true
+        },
+        {
+          "actual": {
+            "status": "healthy",
+            "status_code": 200
+          },
+          "description": "GET /health returns healthy status",
+          "expected": {
+            "status": "healthy",
+            "status_code": 200
+          },
+          "id": "health_endpoint",
+          "passed": true,
+          "required": true
+        },
+        {
+          "actual": {
+            "description": "OpenEnv environment for managing ML model canary releases with increase, hold, and rollback decisions.",
+            "name": "Canary Release Manager",
+            "status_code": 200
+          },
+          "description": "GET /metadata returns name and description",
+          "expected": {
+            "fields": [
+              "name",
+              "description"
+            ],
+            "status_code": 200
+          },
+          "id": "metadata_endpoint",
+          "passed": true,
+          "required": true
+        },
+        {
+          "actual": {
+            "has_action": true,
+            "has_observation": true,
+            "has_state": true,
+            "status_code": 200
+          },
+          "description": "GET /schema returns action, observation, and state schemas",
+          "expected": {
+            "fields": [
+              "action",
+              "observation",
+              "state"
+            ],
+            "status_code": 200
+          },
+          "id": "schema_endpoint",
+          "passed": true,
+          "required": true
+        },
+        {
+          "actual": {
+            "jsonrpc": "2.0",
+            "status_code": 200
+          },
+          "description": "POST /mcp is reachable and returns JSON-RPC payload",
+          "expected": {
+            "jsonrpc": "2.0",
+            "status_code": 200
+          },
+          "id": "mcp_endpoint",
+          "passed": true,
+          "required": true
+        },
+        {
+          "actual": {
+            "/reset": true,
+            "/state": true,
+            "/step": true
+          },
+          "description": "OpenAPI endpoint set matches OpenEnv mode contract",
+          "expected": {
+            "/reset": true,
+            "/state": true,
+            "/step": true
+          },
+          "id": "mode_endpoint_consistency",
+          "passed": true,
+          "required": true
+        }
+      ],
+      "mode": "simulation",
+      "passed": true,
+      "standard_profile": "openenv-http/1.x",
+      "standard_version": "1.0.0",
+      "summary": {
+        "failed_criteria": [],
+        "passed_count": 6,
+        "required_passed_count": 6,
+        "required_total_count": 6,
+        "total_count": 6
+      },
+      "target": "http://127.0.0.1:50362",
+      "validation_type": "running_environment"
+    },
+    "passed": true,
+    "returncode": 0,
+    "stderr": "",
+    "stdout": "{\n  \"target\": \"http://127.0.0.1:50362\",\n  \"validation_type\": \"running_environment\",\n  \"standard_version\": \"1.0.0\",\n  \"standard_profile\": \"openenv-http/1.x\",\n  \"mode\": \"simulation\",\n  \"passed\": true,\n  \"summary\": {\n    \"passed_count\": 6,\n    \"total_count\": 6,\n    \"failed_criteria\": [],\n    \"required_passed_count\": 6,\n    \"required_total_count\": 6\n  },\n  \"criteria\": [\n    {\n      \"id\": \"openapi_version_available\",\n      \"description\": \"GET /openapi.json returns OpenAPI info.version\",\n      \"passed\": true,\n      \"required\": true,\n      \"expected\": {\n        \"status_code\": 200,\n        \"info.version\": \"string\"\n      },\n      \"actual\": {\n        \"status_code\": 200,\n        \"info.version\": \"1.0.0\"\n      }\n    },\n    {\n      \"id\": \"health_endpoint\",\n      \"description\": \"GET /health returns healthy status\",\n      \"passed\": true,\n      \"required\": true,\n      \"expected\": {\n        \"status_code\": 200,\n        \"status\": \"healthy\"\n      },\n      \"actual\": {\n        \"status_code\": 200,\n        \"status\": \"healthy\"\n      }\n    },\n    {\n      \"id\": \"metadata_endpoint\",\n      \"description\": \"GET /metadata returns name and description\",\n      \"passed\": true,\n      \"required\": true,\n      \"expected\": {\n        \"status_code\": 200,\n        \"fields\": [\n          \"name\",\n          \"description\"\n        ]\n      },\n      \"actual\": {\n        \"status_code\": 200,\n        \"name\": \"Canary Release Manager\",\n        \"description\": \"OpenEnv environment for managing ML model canary releases with increase, hold, and rollback decisions.\"\n      }\n    },\n    {\n      \"id\": \"schema_endpoint\",\n      \"description\": \"GET /schema returns action, observation, and state schemas\",\n      \"passed\": true,\n      \"required\": true,\n      \"expected\": {\n        \"status_code\": 200,\n        \"fields\": [\n          \"action\",\n          \"observation\",\n          \"state\"\n        ]\n      },\n      \"actual\": {\n        \"status_code\": 200,\n        \"has_action\": true,\n        \"has_observation\": true,\n        \"has_state\": true\n      }\n    },\n    {\n      \"id\": \"mcp_endpoint\",\n      \"description\": \"POST /mcp is reachable and returns JSON-RPC payload\",\n      \"passed\": true,\n      \"required\": true,\n      \"expected\": {\n        \"status_code\": 200,\n        \"jsonrpc\": \"2.0\"\n      },\n      \"actual\": {\n        \"status_code\": 200,\n        \"jsonrpc\": \"2.0\"\n      }\n    },\n    {\n      \"id\": \"mode_endpoint_consistency\",\n      \"description\": \"OpenAPI endpoint set matches OpenEnv mode contract\",\n      \"passed\": true,\n      \"required\": true,\n      \"expected\": {\n        \"/reset\": true,\n        \"/step\": true,\n        \"/state\": true\n      },\n      \"actual\": {\n        \"/reset\": true,\n        \"/step\": true,\n        \"/state\": true\n      }\n    }\n  ]\n}"
+  },
+  "structural": {
+    "command": "python -m openenv.cli validate .",
+    "passed": true,
+    "returncode": 0,
+    "stderr": "",
+    "stdout": "[OK] : Ready for multi-mode deployment"
+  }
+}

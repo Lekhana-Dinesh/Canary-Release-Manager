@@ -8,7 +8,9 @@ version: "1.0.0"
 description: >
   Production-minded OpenEnv benchmark for canary release decision-making.
   The agent observes canary and stable metrics, then decides whether to
-  increase traffic, hold, or rollback.
+  increase traffic, hold, or rollback. Agent-facing observations expose
+  telemetry, rollout progress, and public guardrails only; evaluator feedback
+  remains outside the main observation surface.
 author: "Canary Release Manager Team"
 license: "Apache-2.0"
 tags:
@@ -35,6 +37,14 @@ tasks:
     name: "Phantom Alert Storm"
     description: "Monitoring false-positives fire early while all metrics are healthy, then a real differential breach follows. Agents must distinguish alert_count from metric evidence."
     difficulty: expert
+  - id: recovery
+    name: "Transient hot shard recovery"
+    description: "A canary-specific latency spike appears below rollback guardrails and then clears, rewarding watchful holds over panic rollback or aggressive promotion."
+    difficulty: hard
+  - id: silent
+    name: "Silent differential burn"
+    description: "Canary-specific differential drift grows with weak alert support, forcing rollback from raw telemetry instead of alert_count."
+    difficulty: hard
 
 action_space:
   type: CanaryAction
@@ -46,6 +56,8 @@ action_space:
       min_length: 15
     - name: slo_breach_detected
       type: bool
+    - name: state_assessment
+      type: "Literal['healthy','warning','noise','phantom_alert','breach']"
 
 observation_space:
   type: CanaryObservation
@@ -63,12 +75,16 @@ observation_space:
       type: float
     - name: differential_p99_ms
       type: float
-    - name: step_reward
+    - name: step_number
+      type: int
+    - name: consecutive_holds
+      type: int
+    - name: rollback_on_error_rate
       type: float
-      range: [0.0, 1.0]
-    - name: cumulative_reward
-      type: float
-      range: [0.0, 1.0]
+    - name: rollback_on_canary_p99_ms
+      type: float | null
+    - name: rollback_on_differential_p99_ms
+      type: float | null
 
 score_contract:
   per_step_score_range: [0.0, 1.0]
@@ -79,17 +95,38 @@ score_contract:
     promotion_safety_score: 0.30
     reasoning_score: 0.10
   note: >
-    Public scores are normalized. The final episode score is the running average
-    of normalized step scores, not a raw cumulative sum.
+    Public scores are normalized. Step rewards are returned as the top-level
+    /step reward and the final episode score is the running average of normalized
+    step scores, not a raw cumulative sum. The reasoning component is fully
+    structured around state_assessment plus breach-flag correctness. The
+    free-text reasoning field is retained for transcript clarity and does not
+    affect score.
+
+determinism:
+  seeded_variants: true
+  canonical_seed: 0
+  note: >
+    Reset accepts the standard OpenEnv seed field. Seed 0 is the canonical
+    profile used for validator-safe defaults and documented baseline scores;
+    non-zero seeds produce bounded deterministic variants within each
+    scenario family, including event timing, alert intensity, drift onset,
+    breach timing changes, and distinct signal signatures such as latency-only
+    versus mixed error-plus-latency regressions.
 
 baseline_scores:
-  easy: 0.9367
-  medium: 0.83
-  hard: 0.8
-  expert: 0.6733
-  average: 0.81
+  easy: 0.9567
+  medium: 0.846
+  hard: 0.8217
+  expert: 0.6967
+  recovery: 0.9109
+  silent: 0.836
+  average: 0.8447
   note: >
     Deterministic rule baseline from POST /baseline. It intentionally ignores
     warning windows, so medium and hard remain discriminative. The expert task
     is scored lower because the baseline policy rolls back on alert_count > 0,
-    which is a false positive on the phantom alert step.
+    which is a false positive on the phantom alert step. The recovery task is
+    scored higher than expert because the baseline does not overreact when the
+    transient latency spike stays below rollback guardrails. The silent task
+    remains lower than recovery because the baseline does not treat weak-alert
+    differential drift as a reason to pause early.

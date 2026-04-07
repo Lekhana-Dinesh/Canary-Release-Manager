@@ -10,4 +10,3 @@ dist/
 build/
 *.egg-info/
 dist_pkgcheck/
-review_artifacts/

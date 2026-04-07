@@ -1,0 +1,24 @@
+{
+  "actual_breach": false,
+  "breach_detection_score": 0.32,
+  "deterministic": true,
+  "explanation": "The canary was temporarily 33.0ms slower than stable, but still below rollback guardrails and consistent with a recoverable transient issue.",
+  "feedback": [
+    "Held through a transient canary-specific degradation instead of overreacting before recovery was visible.",
+    "Structured state_assessment matched the observed state (warning). Structured breach flag was internally consistent and correct. Free-text reasoning is retained for transcript clarity only and does not affect the score."
+  ],
+  "max_score": 1.0,
+  "normalized": true,
+  "policy_assessment": "correct_recovery_hold",
+  "promotion_safety_score": 0.18,
+  "reasoning_score": 0.1,
+  "reward_breakdown": {
+    "breach_detection_score": 0.32,
+    "promotion_safety_score": 0.18,
+    "reasoning_score": 0.1,
+    "rollback_timing_score": 0.24
+  },
+  "rollback_timing_score": 0.24,
+  "task_id": "recovery",
+  "total_score": 0.84
+}

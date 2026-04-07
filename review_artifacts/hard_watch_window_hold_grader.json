@@ -1,0 +1,24 @@
+{
+  "actual_breach": false,
+  "breach_detection_score": 0.32,
+  "deterministic": true,
+  "explanation": "After the shared-noise event, the canary stayed 24.0ms slower than stable without a confirmed breach yet.",
+  "feedback": [
+    "Held during the post-noise watch window so the canary-specific differential could become clearer.",
+    "Structured state_assessment matched the observed state (warning). Structured breach flag was internally consistent and correct. Free-text reasoning is retained for transcript clarity only and does not affect the score."
+  ],
+  "max_score": 1.0,
+  "normalized": true,
+  "policy_assessment": "correct_warning_hold",
+  "promotion_safety_score": 0.17,
+  "reasoning_score": 0.1,
+  "reward_breakdown": {
+    "breach_detection_score": 0.32,
+    "promotion_safety_score": 0.17,
+    "reasoning_score": 0.1,
+    "rollback_timing_score": 0.24
+  },
+  "rollback_timing_score": 0.24,
+  "task_id": "hard",
+  "total_score": 0.83
+}

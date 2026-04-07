@@ -21,11 +21,16 @@ USE_PACKAGE_IMPORTS = (__package__ or "").startswith("canary_release_env.server"
 if USE_PACKAGE_IMPORTS:
     from canary_release_env.models import CanaryAction, CanaryObservation
     from canary_release_env.server.grader import GradeResult, grade
-    from canary_release_env.server.scenarios import MetricSnapshot, SCENARIOS, Scenario
+    from canary_release_env.server.scenarios import (
+        MetricSnapshot,
+        SCENARIOS,
+        SLO_ERROR_THRESHOLD,
+        Scenario,
+    )
 else:
     from models import CanaryAction, CanaryObservation
     from server.grader import GradeResult, grade
-    from server.scenarios import MetricSnapshot, SCENARIOS, Scenario
+    from server.scenarios import MetricSnapshot, SCENARIOS, SLO_ERROR_THRESHOLD, Scenario
 
 MAX_STEPS = 12
 TRAFFIC_STEP_MAP = {
@@ -45,11 +50,13 @@ class CanaryEnvironment(Environment):
         self._consecutive_holds: int = 0
         self._score_total: float = 0.0
         self._done: bool = False
+        self._seed: int = 0
         self._last_grade: GradeResult | None = None
+        self._last_feedback_text: str = ""
         self._transcript: list[dict[str, Any]] = []
         self._state = State(episode_id=str(uuid4()), step_count=0)
 
-    def reset(self, task: str = "easy") -> CanaryObservation:
+    def reset(self, task: str = "easy", seed: int | None = None) -> CanaryObservation:
         requested_task = task
         defaulted_task = requested_task not in SCENARIOS
         if defaulted_task:
@@ -61,24 +68,19 @@ class CanaryEnvironment(Environment):
         self._consecutive_holds = 0
         self._score_total = 0.0
         self._done = False
+        self._seed = int(seed or 0)
         self._last_grade = None
+        self._last_feedback_text = ""
         self._transcript = []
         self._state = State(episode_id=str(uuid4()), step_count=0)
+        self._state.task_id = task
+        self._state.seed = self._seed
+        self._state.defaulted_task = defaulted_task
+        self._state.requested_task = requested_task
 
         return self._build_observation(
             snapshot=self._current_snapshot(),
             reward=0.0,
-            feedback=(
-                (
-                    f"Unknown task '{requested_task}' requested; defaulted to 'easy' so reset() could return a valid episode. "
-                    if defaulted_task
-                    else ""
-                )
-                + f"New deployment started. Canary is at 0% traffic. "
-                + f"Task: '{task}' - {self._scenario.failure_pattern}. "
-                + "Use the current observation to decide whether to promote, hold, or rollback."
-            ),
-            grade_result=None,
         )
 
     def step(self, action: CanaryAction) -> CanaryObservation:
@@ -89,8 +91,6 @@ class CanaryEnvironment(Environment):
             return self._build_observation(
                 snapshot=self._current_snapshot(),
                 reward=0.0,
-                feedback="Episode already complete. Call reset() to start a new one.",
-                grade_result=self._last_grade,
             )
 
         pre_snapshot = self._current_snapshot()
@@ -134,11 +134,10 @@ class CanaryEnvironment(Environment):
             self._done = True
 
         feedback = self._build_feedback(action, grade_result)
+        self._last_feedback_text = feedback
         observation = self._build_observation(
             snapshot=self._current_snapshot(),
             reward=grade_result.total_score,
-            feedback=feedback,
-            grade_result=grade_result,
         )
 
         self._transcript.append(
@@ -180,11 +179,46 @@ class CanaryEnvironment(Environment):
     def transcript(self) -> list[dict[str, Any]]:
         return list(self._transcript)
 
+    def episode_context(self) -> dict[str, Any]:
+        if self._scenario is None:
+            return {
+                "task_id": "uninitialized",
+                "task_name": "uninitialized",
+                "difficulty": "n/a",
+                "failure_pattern": "No active rollout.",
+                "seed": self._seed,
+            }
+        return {
+            "task_id": self._scenario.id,
+            "task_name": self._scenario.name,
+            "difficulty": self._scenario.difficulty,
+            "failure_pattern": self._scenario.failure_pattern,
+            "seed": self._seed,
+            "defaulted_task": bool(getattr(self._state, "defaulted_task", False)),
+            "requested_task": getattr(self._state, "requested_task", self._scenario.id),
+        }
+
+    def last_evaluation(self) -> dict[str, Any] | None:
+        if self._last_grade is None:
+            return None
+        return {
+            "step_reward": round(self._last_grade.total_score, 4),
+            "episode_score": round(self._running_episode_score(), 4),
+            "actual_breach": self._last_grade.actual_breach,
+            "policy_assessment": self._last_grade.policy_assessment,
+            "reward_breakdown": self._last_grade.reward_breakdown,
+            "explanation": self._last_grade.explanation,
+            "feedback": list(self._last_grade.feedback_parts),
+            "summary": self._last_grade.summary(),
+            "feedback_text": self._last_feedback_text,
+        }
+
     def episode_result(self) -> dict[str, Any]:
         if self._scenario is None:
             return {
                 "episode_id": self._state.episode_id,
                 "task_id": "uninitialized",
+                "seed": self._seed,
                 "steps": 0,
                 "episode_score": 0.0,
                 "outcome": "not_started",
@@ -211,6 +245,8 @@ class CanaryEnvironment(Environment):
         return {
             "episode_id": self._state.episode_id,
             "task_id": self._scenario.id,
+            "task_name": self._scenario.name,
+            "seed": self._seed,
             "steps": self._step_number,
             "episode_score": round(self._running_episode_score(), 4),
             "outcome": outcome,
@@ -229,7 +265,7 @@ class CanaryEnvironment(Environment):
     def _current_snapshot(self) -> MetricSnapshot:
         if self._scenario is None:
             return MetricSnapshot(0.001, 140.0, 0.001, 140.0, 0)
-        return self._scenario.metric_fn(self._traffic_pct, self._step_number)
+        return self._scenario.metric_fn(self._traffic_pct, self._step_number, self._seed)
 
     def _running_episode_score(self) -> float:
         if self._step_number == 0:
@@ -241,16 +277,8 @@ class CanaryEnvironment(Environment):
         *,
         snapshot: MetricSnapshot,
         reward: float,
-        feedback: str,
-        grade_result: GradeResult | None,
     ) -> CanaryObservation:
         scenario = self._scenario
-        task_id = scenario.id if scenario else "uninitialized"
-        task_description = (
-            scenario.agent_instructions
-            if scenario
-            else "Reset the environment before calling step()."
-        )
 
         return CanaryObservation(
             reward=round(reward, 4),
@@ -267,18 +295,17 @@ class CanaryEnvironment(Environment):
                 snapshot.canary_p99_ms - snapshot.stable_p99_ms, 2
             ),
             alert_count=snapshot.alert_count,
-            step_number=self._step_number,
-            step_reward=round(reward, 4),
-            cumulative_reward=round(self._running_episode_score(), 4),
-            is_done=self._done,
             consecutive_holds=self._consecutive_holds,
-            actual_breach=grade_result.actual_breach if grade_result else False,
-            policy_assessment=grade_result.policy_assessment if grade_result else "",
-            reward_breakdown=grade_result.reward_breakdown if grade_result else {},
-            step_explanation=grade_result.explanation if grade_result else "",
-            task_id=task_id,
-            task_description=task_description,
-            feedback=feedback,
+            step_number=self._step_number,
+            rollback_on_error_rate=(
+                scenario.rollback_on_error_rate if scenario else SLO_ERROR_THRESHOLD
+            ),
+            rollback_on_canary_p99_ms=(
+                scenario.rollback_on_canary_p99_ms if scenario else None
+            ),
+            rollback_on_differential_p99_ms=(
+                scenario.rollback_on_differential_p99_ms if scenario else None
+            ),
         )
 
     def _uninitialized_observation(self) -> CanaryObservation:
@@ -293,18 +320,11 @@ class CanaryEnvironment(Environment):
             differential_error=0.0,
             differential_p99_ms=0.0,
             alert_count=0,
-            step_number=0,
-            step_reward=0.0,
-            cumulative_reward=0.0,
-            is_done=True,
             consecutive_holds=0,
-            actual_breach=False,
-            policy_assessment="reset_required",
-            reward_breakdown={},
-            step_explanation="Call reset() before calling step().",
-            task_id="uninitialized",
-            task_description="Call reset() before step(), or use /episodes for stateful HTTP.",
-            feedback="No active episode. Reset first so the action is graded against a real task state.",
+            step_number=0,
+            rollback_on_error_rate=SLO_ERROR_THRESHOLD,
+            rollback_on_canary_p99_ms=None,
+            rollback_on_differential_p99_ms=None,
         )
 
     def _build_feedback(self, action: CanaryAction, result: GradeResult) -> str:
@@ -347,6 +367,15 @@ class CanaryEnvironment(Environment):
                 snapshot.canary_p99_ms - snapshot.stable_p99_ms, 2
             ),
             "alert_count": snapshot.alert_count,
+            "rollback_on_error_rate": (
+                self._scenario.rollback_on_error_rate if self._scenario else SLO_ERROR_THRESHOLD
+            ),
+            "rollback_on_canary_p99_ms": (
+                self._scenario.rollback_on_canary_p99_ms if self._scenario else None
+            ),
+            "rollback_on_differential_p99_ms": (
+                self._scenario.rollback_on_differential_p99_ms if self._scenario else None
+            ),
         }
 
     def _observation_summary(self, observation: CanaryObservation) -> dict[str, Any]:
@@ -361,9 +390,12 @@ class CanaryEnvironment(Environment):
             "differential_error": observation.differential_error,
             "differential_p99_ms": observation.differential_p99_ms,
             "alert_count": observation.alert_count,
-            "step_reward": observation.step_reward,
-            "episode_score": observation.cumulative_reward,
-            "is_done": observation.is_done,
+            "rollback_on_error_rate": observation.rollback_on_error_rate,
+            "rollback_on_canary_p99_ms": observation.rollback_on_canary_p99_ms,
+            "rollback_on_differential_p99_ms": observation.rollback_on_differential_p99_ms,
+            "step_reward": round(float(observation.reward or 0.0), 4),
+            "episode_score": round(self._running_episode_score(), 4),
+            "is_done": observation.done,
         }
 
     def _empty_score_breakdown(self) -> dict[str, float]:

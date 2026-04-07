@@ -46,6 +46,9 @@ class CanaryEnv(EnvClient[CanaryAction, CanaryObservation, State]):
     def _parse_state(self, payload: dict) -> State:
         return State.model_validate(payload)
 
-    async def reset(self, task: str = "easy") -> CanaryObservation:
-        result = await super().reset(task=task)
+    async def reset(self, task: str = "easy", seed: int | None = None) -> CanaryObservation:
+        if seed is None:
+            result = await super().reset(task=task)
+        else:
+            result = await super().reset(task=task, seed=seed)
         return result.observation

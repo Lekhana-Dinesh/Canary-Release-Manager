@@ -1,0 +1,24 @@
+{
+  "actual_breach": false,
+  "breach_detection_score": 0.35,
+  "deterministic": true,
+  "explanation": "Monitoring fired 4 alert(s) but canary_error_rate=0.0018 and differential_p99_ms=6.0ms were both within guardrails \u2014 this was a false-positive alert storm.",
+  "feedback": [
+    "Correctly held traffic despite phantom alerts; metrics confirm no real breach.",
+    "Structured state_assessment matched the observed state (phantom_alert). Structured breach flag was internally consistent and correct. Free-text reasoning is retained for transcript clarity only and does not affect the score."
+  ],
+  "max_score": 1.0,
+  "normalized": true,
+  "policy_assessment": "correct_phantom_ignore",
+  "promotion_safety_score": 0.22,
+  "reasoning_score": 0.1,
+  "reward_breakdown": {
+    "breach_detection_score": 0.35,
+    "promotion_safety_score": 0.22,
+    "reasoning_score": 0.1,
+    "rollback_timing_score": 0.25
+  },
+  "rollback_timing_score": 0.25,
+  "task_id": "expert",
+  "total_score": 0.92
+}

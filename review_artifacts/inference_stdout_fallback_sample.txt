@@ -1,0 +1,49 @@
+[START] task=easy env=canary-release-env model=fallback
+[STEP] step=1 action=increase_10 reward=0.97 done=false error=null
+[STEP] step=2 action=increase_10 reward=0.97 done=false error=null
+[STEP] step=3 action=rollback reward=0.93 done=true error=null
+[END] success=true steps=3 score=0.9567 rewards=0.97,0.97,0.93
+[START] task=medium env=canary-release-env model=fallback
+[STEP] step=1 action=increase_10 reward=0.97 done=false error=null
+[STEP] step=2 action=increase_10 reward=0.97 done=false error=null
+[STEP] step=3 action=increase_10 reward=0.97 done=false error=null
+[STEP] step=4 action=increase_5 reward=0.77 done=false error=null
+[STEP] step=5 action=rollback reward=0.97 done=true error=null
+[END] success=true steps=5 score=0.9300 rewards=0.97,0.97,0.97,0.77,0.97
+[START] task=hard env=canary-release-env model=fallback
+[STEP] step=1 action=increase_10 reward=0.97 done=false error=null
+[STEP] step=2 action=increase_10 reward=0.97 done=false error=null
+[STEP] step=3 action=increase_10 reward=0.97 done=false error=null
+[STEP] step=4 action=hold reward=0.90 done=false error=null
+[STEP] step=5 action=hold reward=0.83 done=false error=null
+[STEP] step=6 action=rollback reward=0.97 done=true error=null
+[END] success=true steps=6 score=0.9350 rewards=0.97,0.97,0.97,0.90,0.83,0.97
+[START] task=expert env=canary-release-env model=fallback
+[STEP] step=1 action=increase_10 reward=0.97 done=false error=null
+[STEP] step=2 action=increase_10 reward=0.97 done=false error=null
+[STEP] step=3 action=hold reward=0.92 done=false error=null
+[STEP] step=4 action=increase_10 reward=0.97 done=false error=null
+[STEP] step=5 action=increase_10 reward=0.97 done=false error=null
+[STEP] step=6 action=rollback reward=0.93 done=true error=null
+[END] success=true steps=6 score=0.9550 rewards=0.97,0.97,0.92,0.97,0.97,0.93
+[START] task=recovery env=canary-release-env model=fallback
+[STEP] step=1 action=increase_10 reward=0.97 done=false error=null
+[STEP] step=2 action=increase_10 reward=0.97 done=false error=null
+[STEP] step=3 action=increase_10 reward=0.97 done=false error=null
+[STEP] step=4 action=hold reward=0.84 done=false error=null
+[STEP] step=5 action=increase_10 reward=0.97 done=false error=null
+[STEP] step=6 action=increase_10 reward=0.97 done=false error=null
+[STEP] step=7 action=increase_10 reward=0.97 done=false error=null
+[STEP] step=8 action=increase_10 reward=0.97 done=false error=null
+[STEP] step=9 action=increase_10 reward=0.97 done=false error=null
+[STEP] step=10 action=increase_10 reward=0.97 done=false error=null
+[STEP] step=11 action=increase_10 reward=0.97 done=false error=null
+[STEP] step=12 action=increase_10 reward=0.97 done=true error=null
+[END] success=true steps=12 score=0.9592 rewards=0.97,0.97,0.97,0.84,0.97,0.97,0.97,0.97,0.97,0.97,0.97,0.97
+[START] task=silent env=canary-release-env model=fallback
+[STEP] step=1 action=increase_10 reward=0.97 done=false error=null
+[STEP] step=2 action=increase_10 reward=0.97 done=false error=null
+[STEP] step=3 action=increase_10 reward=0.97 done=false error=null
+[STEP] step=4 action=hold reward=0.84 done=false error=null
+[STEP] step=5 action=rollback reward=1.00 done=true error=null
+[END] success=true steps=5 score=0.9500 rewards=0.97,0.97,0.97,0.84,1.00

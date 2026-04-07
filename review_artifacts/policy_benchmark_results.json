@@ -1,0 +1,1359 @@
+{
+  "hard_task_ordering": [
+    "cautious_policy",
+    "shallow_baseline",
+    "aggressive_policy"
+  ],
+  "policies": {
+    "aggressive_policy": {
+      "average": 0.7059,
+      "description": "Intentionally overconfident policy that promotes hard and medium cases too aggressively.",
+      "details": {
+        "easy": {
+          "actions": [
+            {
+              "action_type": "increase_25",
+              "consecutive_holds": 0,
+              "reasoning": "Traffic is only 0% and the canary has not breached yet, so use an aggressive promotion step with differential_p99=0.0ms.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 0,
+              "traffic_pct": 0.0
+            },
+            {
+              "action_type": "rollback",
+              "consecutive_holds": 0,
+              "reasoning": "The canary is already breaching with error=0.0190 and differential_p99=120.0ms, so rollback.",
+              "slo_breach_detected": true,
+              "state_assessment": "breach",
+              "step_number": 1,
+              "traffic_pct": 0.25
+            }
+          ],
+          "episode_summary": "Rolled back on the first confirmed breach after the benchmark rollback point of 15% traffic; the first confirmed breach was observed at 25% traffic. Final normalized score=0.7450.",
+          "outcome": "rollback",
+          "policy": "aggressive_policy",
+          "rollback_assessment": {
+            "benchmark_rollback_at": 0.15,
+            "relative_to_benchmark_point": "late",
+            "relative_to_first_breach": "on_first_breach",
+            "rollback_action_taken": true,
+            "rollback_traffic_pct": 0.25
+          },
+          "score": 0.745,
+          "score_breakdown": {
+            "breach_detection_score": 0.29,
+            "promotion_safety_score": 0.19,
+            "reasoning_score": 0.1,
+            "rollback_timing_score": 0.165,
+            "total_score": 0.745
+          },
+          "seed": 0,
+          "steps": 2,
+          "task_id": "easy"
+        },
+        "expert": {
+          "actions": [
+            {
+              "action_type": "increase_25",
+              "consecutive_holds": 0,
+              "reasoning": "Traffic is only 0% and the canary has not breached yet, so use an aggressive promotion step with differential_p99=6.0ms.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 0,
+              "traffic_pct": 0.0
+            },
+            {
+              "action_type": "increase_25",
+              "consecutive_holds": 0,
+              "reasoning": "Traffic is only 25% and the canary has not breached yet, so use an aggressive promotion step with differential_p99=6.0ms.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 1,
+              "traffic_pct": 0.25
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Traffic is only 50% and the canary has not breached yet, so use an aggressive promotion step with differential_p99=6.0ms.",
+              "slo_breach_detected": false,
+              "state_assessment": "phantom_alert",
+              "step_number": 2,
+              "traffic_pct": 0.5
+            },
+            {
+              "action_type": "rollback",
+              "consecutive_holds": 0,
+              "reasoning": "The canary is already breaching with error=0.0122 and differential_p99=196.0ms, so rollback.",
+              "slo_breach_detected": true,
+              "state_assessment": "breach",
+              "step_number": 3,
+              "traffic_pct": 0.6
+            }
+          ],
+          "episode_summary": "Rolled back on the first confirmed breach after the benchmark rollback point of 35% traffic; the first confirmed breach was observed at 60% traffic. Final normalized score=0.7075.",
+          "outcome": "rollback",
+          "policy": "aggressive_policy",
+          "rollback_assessment": {
+            "benchmark_rollback_at": 0.35,
+            "relative_to_benchmark_point": "late",
+            "relative_to_first_breach": "on_first_breach",
+            "rollback_action_taken": true,
+            "rollback_traffic_pct": 0.6
+          },
+          "score": 0.7075,
+          "score_breakdown": {
+            "breach_detection_score": 0.29,
+            "promotion_safety_score": 0.17,
+            "reasoning_score": 0.1,
+            "rollback_timing_score": 0.1475,
+            "total_score": 0.7075
+          },
+          "seed": 0,
+          "steps": 4,
+          "task_id": "expert"
+        },
+        "hard": {
+          "actions": [
+            {
+              "action_type": "increase_25",
+              "consecutive_holds": 0,
+              "reasoning": "Traffic is only 0% and the canary has not breached yet, so use an aggressive promotion step with differential_p99=0.0ms.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 0,
+              "traffic_pct": 0.0
+            },
+            {
+              "action_type": "increase_25",
+              "consecutive_holds": 0,
+              "reasoning": "Traffic is only 25% and the canary has not breached yet, so use an aggressive promotion step with differential_p99=0.0ms.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 1,
+              "traffic_pct": 0.25
+            },
+            {
+              "action_type": "rollback",
+              "consecutive_holds": 0,
+              "reasoning": "The canary is already breaching with error=0.0132 and differential_p99=104.0ms, so rollback.",
+              "slo_breach_detected": true,
+              "state_assessment": "breach",
+              "step_number": 2,
+              "traffic_pct": 0.5
+            }
+          ],
+          "episode_summary": "Rolled back on the first confirmed breach after the benchmark rollback point of 30% traffic; the first confirmed breach was observed at 50% traffic. Final normalized score=0.6567.",
+          "outcome": "rollback",
+          "policy": "aggressive_policy",
+          "rollback_assessment": {
+            "benchmark_rollback_at": 0.3,
+            "relative_to_benchmark_point": "late",
+            "relative_to_first_breach": "on_first_breach",
+            "rollback_action_taken": true,
+            "rollback_traffic_pct": 0.5
+          },
+          "score": 0.6567,
+          "score_breakdown": {
+            "breach_detection_score": 0.27,
+            "promotion_safety_score": 0.1533,
+            "reasoning_score": 0.1,
+            "rollback_timing_score": 0.1333,
+            "total_score": 0.6567
+          },
+          "seed": 0,
+          "steps": 3,
+          "task_id": "hard"
+        },
+        "medium": {
+          "actions": [
+            {
+              "action_type": "increase_25",
+              "consecutive_holds": 0,
+              "reasoning": "Traffic is only 0% and the canary has not breached yet, so use an aggressive promotion step with differential_p99=0.0ms.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 0,
+              "traffic_pct": 0.0
+            },
+            {
+              "action_type": "increase_25",
+              "consecutive_holds": 0,
+              "reasoning": "Traffic is only 25% and the canary has not breached yet, so use an aggressive promotion step with differential_p99=0.0ms.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 1,
+              "traffic_pct": 0.25
+            },
+            {
+              "action_type": "rollback",
+              "consecutive_holds": 0,
+              "reasoning": "The canary is already breaching with error=0.0160 and differential_p99=75.0ms, so rollback.",
+              "slo_breach_detected": true,
+              "state_assessment": "breach",
+              "step_number": 2,
+              "traffic_pct": 0.5
+            }
+          ],
+          "episode_summary": "Rolled back on the first confirmed breach after the benchmark rollback point of 35% traffic; the first confirmed breach was observed at 50% traffic. Final normalized score=0.6567.",
+          "outcome": "rollback",
+          "policy": "aggressive_policy",
+          "rollback_assessment": {
+            "benchmark_rollback_at": 0.35,
+            "relative_to_benchmark_point": "late",
+            "relative_to_first_breach": "on_first_breach",
+            "rollback_action_taken": true,
+            "rollback_traffic_pct": 0.5
+          },
+          "score": 0.6567,
+          "score_breakdown": {
+            "breach_detection_score": 0.27,
+            "promotion_safety_score": 0.1533,
+            "reasoning_score": 0.1,
+            "rollback_timing_score": 0.1333,
+            "total_score": 0.6567
+          },
+          "seed": 0,
+          "steps": 3,
+          "task_id": "medium"
+        },
+        "recovery": {
+          "actions": [
+            {
+              "action_type": "increase_25",
+              "consecutive_holds": 0,
+              "reasoning": "Traffic is only 0% and the canary has not breached yet, so use an aggressive promotion step with differential_p99=0.0ms.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 0,
+              "traffic_pct": 0.0
+            },
+            {
+              "action_type": "increase_25",
+              "consecutive_holds": 0,
+              "reasoning": "Traffic is only 25% and the canary has not breached yet, so use an aggressive promotion step with differential_p99=0.0ms.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 1,
+              "traffic_pct": 0.25
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Traffic is only 50% and the canary has not breached yet, so use an aggressive promotion step with differential_p99=0.0ms.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 2,
+              "traffic_pct": 0.5
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Traffic is only 60% and the canary has not breached yet, so use an aggressive promotion step with differential_p99=33.0ms.",
+              "slo_breach_detected": false,
+              "state_assessment": "warning",
+              "step_number": 3,
+              "traffic_pct": 0.6
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Traffic is only 70% and the canary has not breached yet, so use an aggressive promotion step with differential_p99=6.0ms.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 4,
+              "traffic_pct": 0.7
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Traffic is only 80% and the canary has not breached yet, so use an aggressive promotion step with differential_p99=6.0ms.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 5,
+              "traffic_pct": 0.8
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Traffic is only 90% and the canary has not breached yet, so use an aggressive promotion step with differential_p99=6.0ms.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 6,
+              "traffic_pct": 0.9
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Traffic is only 100% and the canary has not breached yet, so use an aggressive promotion step with differential_p99=6.0ms.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 7,
+              "traffic_pct": 1.0
+            }
+          ],
+          "episode_summary": "Reached 100% traffic without a confirmed canary breach. Final normalized score=0.7862.",
+          "outcome": "success",
+          "policy": "aggressive_policy",
+          "rollback_assessment": {
+            "benchmark_rollback_at": null,
+            "relative_to_benchmark_point": "not_applicable",
+            "relative_to_first_breach": "not_applicable",
+            "rollback_action_taken": false,
+            "rollback_traffic_pct": null
+          },
+          "score": 0.7862,
+          "score_breakdown": {
+            "breach_detection_score": 0.2888,
+            "promotion_safety_score": 0.1938,
+            "reasoning_score": 0.1,
+            "rollback_timing_score": 0.2037,
+            "total_score": 0.7862
+          },
+          "seed": 0,
+          "steps": 8,
+          "task_id": "recovery"
+        },
+        "silent": {
+          "actions": [
+            {
+              "action_type": "increase_25",
+              "consecutive_holds": 0,
+              "reasoning": "Traffic is only 0% and the canary has not breached yet, so use an aggressive promotion step with differential_p99=0.0ms.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 0,
+              "traffic_pct": 0.0
+            },
+            {
+              "action_type": "increase_25",
+              "consecutive_holds": 0,
+              "reasoning": "Traffic is only 25% and the canary has not breached yet, so use an aggressive promotion step with differential_p99=0.0ms.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 1,
+              "traffic_pct": 0.25
+            },
+            {
+              "action_type": "rollback",
+              "consecutive_holds": 0,
+              "reasoning": "The canary is already breaching with error=0.0040 and differential_p99=88.0ms, so rollback.",
+              "slo_breach_detected": true,
+              "state_assessment": "breach",
+              "step_number": 2,
+              "traffic_pct": 0.5
+            }
+          ],
+          "episode_summary": "Rolled back on the first confirmed breach after the benchmark rollback point of 40% traffic; the first confirmed breach was observed at 50% traffic. Final normalized score=0.6833.",
+          "outcome": "rollback",
+          "policy": "aggressive_policy",
+          "rollback_assessment": {
+            "benchmark_rollback_at": 0.4,
+            "relative_to_benchmark_point": "late",
+            "relative_to_first_breach": "on_first_breach",
+            "rollback_action_taken": true,
+            "rollback_traffic_pct": 0.5
+          },
+          "score": 0.6833,
+          "score_breakdown": {
+            "breach_detection_score": 0.27,
+            "promotion_safety_score": 0.1533,
+            "reasoning_score": 0.1,
+            "rollback_timing_score": 0.16,
+            "total_score": 0.6833
+          },
+          "seed": 0,
+          "steps": 3,
+          "task_id": "silent"
+        }
+      },
+      "scores": {
+        "easy": 0.745,
+        "expert": 0.7075,
+        "hard": 0.6567,
+        "medium": 0.6567,
+        "recovery": 0.7862,
+        "silent": 0.6833
+      }
+    },
+    "cautious_policy": {
+      "average": 0.9476,
+      "description": "Safer observation-aware policy used as the inference fallback.",
+      "details": {
+        "easy": {
+          "actions": [
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics are healthy with error=0.0010 and differential_p99=0.0ms, so increase traffic by 10%.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 0,
+              "traffic_pct": 0.0
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics are healthy with error=0.0010 and differential_p99=0.0ms, so increase traffic by 10%.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 1,
+              "traffic_pct": 0.1
+            },
+            {
+              "action_type": "rollback",
+              "consecutive_holds": 0,
+              "reasoning": "The canary is in breach with error=0.0130 and differential_p99=80.0ms, so rollback immediately.",
+              "slo_breach_detected": true,
+              "state_assessment": "breach",
+              "step_number": 2,
+              "traffic_pct": 0.2
+            }
+          ],
+          "episode_summary": "Rolled back on the first confirmed breach after the benchmark rollback point of 15% traffic; the first confirmed breach was observed at 20% traffic. Final normalized score=0.9567.",
+          "outcome": "rollback",
+          "policy": "cautious_policy",
+          "rollback_assessment": {
+            "benchmark_rollback_at": 0.15,
+            "relative_to_benchmark_point": "late",
+            "relative_to_first_breach": "on_first_breach",
+            "rollback_action_taken": true,
+            "rollback_traffic_pct": 0.2
+          },
+          "score": 0.9567,
+          "score_breakdown": {
+            "breach_detection_score": 0.35,
+            "promotion_safety_score": 0.28,
+            "reasoning_score": 0.1,
+            "rollback_timing_score": 0.2267,
+            "total_score": 0.9567
+          },
+          "seed": 0,
+          "steps": 3,
+          "task_id": "easy"
+        },
+        "expert": {
+          "actions": [
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics are healthy with error=0.0018 and differential_p99=6.0ms, so increase traffic by 10%.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 0,
+              "traffic_pct": 0.0
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics are healthy with error=0.0018 and differential_p99=6.0ms, so increase traffic by 10%.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 1,
+              "traffic_pct": 0.1
+            },
+            {
+              "action_type": "hold",
+              "consecutive_holds": 0,
+              "reasoning": "Monitoring fired 4 alert(s) but canary_error_rate=0.0018 and differential_p99=6.0ms are within guardrails; hold to confirm before acting on alerts alone.",
+              "slo_breach_detected": false,
+              "state_assessment": "phantom_alert",
+              "step_number": 2,
+              "traffic_pct": 0.2
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 1,
+              "reasoning": "Metrics are healthy with error=0.0018 and differential_p99=6.0ms, so increase traffic by 10%.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 3,
+              "traffic_pct": 0.2
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics are healthy with error=0.0018 and differential_p99=6.0ms, so increase traffic by 10%.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 4,
+              "traffic_pct": 0.3
+            },
+            {
+              "action_type": "rollback",
+              "consecutive_holds": 0,
+              "reasoning": "The canary is in breach with error=0.0058 and differential_p99=84.0ms, so rollback immediately.",
+              "slo_breach_detected": true,
+              "state_assessment": "breach",
+              "step_number": 5,
+              "traffic_pct": 0.4
+            }
+          ],
+          "episode_summary": "Rolled back on the first confirmed breach after the benchmark rollback point of 35% traffic; the first confirmed breach was observed at 40% traffic. Final normalized score=0.9550.",
+          "outcome": "rollback",
+          "policy": "cautious_policy",
+          "rollback_assessment": {
+            "benchmark_rollback_at": 0.35,
+            "relative_to_benchmark_point": "late",
+            "relative_to_first_breach": "on_first_breach",
+            "rollback_action_taken": true,
+            "rollback_traffic_pct": 0.4
+          },
+          "score": 0.955,
+          "score_breakdown": {
+            "breach_detection_score": 0.35,
+            "promotion_safety_score": 0.2667,
+            "reasoning_score": 0.1,
+            "rollback_timing_score": 0.2383,
+            "total_score": 0.955
+          },
+          "seed": 0,
+          "steps": 6,
+          "task_id": "expert"
+        },
+        "hard": {
+          "actions": [
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics are healthy with error=0.0010 and differential_p99=0.0ms, so increase traffic by 10%.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 0,
+              "traffic_pct": 0.0
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics are healthy with error=0.0010 and differential_p99=0.0ms, so increase traffic by 10%.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 1,
+              "traffic_pct": 0.1
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics are healthy with error=0.0010 and differential_p99=0.0ms, so increase traffic by 10%.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 2,
+              "traffic_pct": 0.2
+            },
+            {
+              "action_type": "hold",
+              "consecutive_holds": 0,
+              "reasoning": "Stable and canary latencies moved together with no differential gap, which looks like shared infrastructure noise.",
+              "slo_breach_detected": false,
+              "state_assessment": "noise",
+              "step_number": 3,
+              "traffic_pct": 0.3
+            },
+            {
+              "action_type": "hold",
+              "consecutive_holds": 1,
+              "reasoning": "Metrics are drifting toward the guardrail with error=0.0026 and differential_p99=24.0ms, so hold for confirmation.",
+              "slo_breach_detected": false,
+              "state_assessment": "warning",
+              "step_number": 4,
+              "traffic_pct": 0.3
+            },
+            {
+              "action_type": "rollback",
+              "consecutive_holds": 2,
+              "reasoning": "The canary is in breach with error=0.0051 and differential_p99=54.0ms, so rollback immediately.",
+              "slo_breach_detected": true,
+              "state_assessment": "breach",
+              "step_number": 5,
+              "traffic_pct": 0.3
+            }
+          ],
+          "episode_summary": "Rolled back on the first confirmed breach at the benchmark rollback point of 30% traffic; the first confirmed breach was observed at 30% traffic. Final normalized score=0.9350. Shared infrastructure noise appeared during the episode. The transcript includes an explicit warning window before the final breach.",
+          "outcome": "rollback",
+          "policy": "cautious_policy",
+          "rollback_assessment": {
+            "benchmark_rollback_at": 0.3,
+            "relative_to_benchmark_point": "timely",
+            "relative_to_first_breach": "on_first_breach",
+            "rollback_action_taken": true,
+            "rollback_traffic_pct": 0.3
+          },
+          "score": 0.935,
+          "score_breakdown": {
+            "breach_detection_score": 0.345,
+            "promotion_safety_score": 0.2467,
+            "reasoning_score": 0.1,
+            "rollback_timing_score": 0.2433,
+            "total_score": 0.935
+          },
+          "seed": 0,
+          "steps": 6,
+          "task_id": "hard"
+        },
+        "medium": {
+          "actions": [
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics are healthy with error=0.0010 and differential_p99=0.0ms, so increase traffic by 10%.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 0,
+              "traffic_pct": 0.0
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics are healthy with error=0.0010 and differential_p99=0.0ms, so increase traffic by 10%.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 1,
+              "traffic_pct": 0.1
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics are healthy with error=0.0010 and differential_p99=0.0ms, so increase traffic by 10%.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 2,
+              "traffic_pct": 0.2
+            },
+            {
+              "action_type": "increase_5",
+              "consecutive_holds": 0,
+              "reasoning": "The canary is drifting with error=0.0040 and differential_p99=15.0ms, so use a 5% confirmation step.",
+              "slo_breach_detected": false,
+              "state_assessment": "warning",
+              "step_number": 3,
+              "traffic_pct": 0.3
+            },
+            {
+              "action_type": "rollback",
+              "consecutive_holds": 0,
+              "reasoning": "The canary is in breach with error=0.0070 and differential_p99=30.0ms, so rollback immediately.",
+              "slo_breach_detected": true,
+              "state_assessment": "breach",
+              "step_number": 4,
+              "traffic_pct": 0.35
+            }
+          ],
+          "episode_summary": "Rolled back on the first confirmed breach at the benchmark rollback point of 35% traffic; the first confirmed breach was observed at 35% traffic. Final normalized score=0.9300. The transcript includes an explicit warning window before the final breach.",
+          "outcome": "rollback",
+          "policy": "cautious_policy",
+          "rollback_assessment": {
+            "benchmark_rollback_at": 0.35,
+            "relative_to_benchmark_point": "timely",
+            "relative_to_first_breach": "on_first_breach",
+            "rollback_action_taken": true,
+            "rollback_traffic_pct": 0.35
+          },
+          "score": 0.93,
+          "score_breakdown": {
+            "breach_detection_score": 0.34,
+            "promotion_safety_score": 0.252,
+            "reasoning_score": 0.1,
+            "rollback_timing_score": 0.238,
+            "total_score": 0.93
+          },
+          "seed": 0,
+          "steps": 5,
+          "task_id": "medium"
+        },
+        "recovery": {
+          "actions": [
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics are healthy with error=0.0010 and differential_p99=0.0ms, so increase traffic by 10%.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 0,
+              "traffic_pct": 0.0
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics are healthy with error=0.0010 and differential_p99=0.0ms, so increase traffic by 10%.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 1,
+              "traffic_pct": 0.1
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics are healthy with error=0.0010 and differential_p99=0.0ms, so increase traffic by 10%.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 2,
+              "traffic_pct": 0.2
+            },
+            {
+              "action_type": "hold",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics are drifting toward the guardrail with error=0.0027 and differential_p99=33.0ms, so hold for confirmation.",
+              "slo_breach_detected": false,
+              "state_assessment": "warning",
+              "step_number": 3,
+              "traffic_pct": 0.3
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 1,
+              "reasoning": "Metrics are healthy with error=0.0012 and differential_p99=6.0ms, so increase traffic by 10%.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 4,
+              "traffic_pct": 0.3
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics are healthy with error=0.0012 and differential_p99=6.0ms, so increase traffic by 10%.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 5,
+              "traffic_pct": 0.4
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics are healthy with error=0.0012 and differential_p99=6.0ms, so increase traffic by 10%.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 6,
+              "traffic_pct": 0.5
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics are healthy with error=0.0012 and differential_p99=6.0ms, so increase traffic by 10%.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 7,
+              "traffic_pct": 0.6
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics are healthy with error=0.0012 and differential_p99=6.0ms, so increase traffic by 10%.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 8,
+              "traffic_pct": 0.7
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics are healthy with error=0.0012 and differential_p99=6.0ms, so increase traffic by 10%.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 9,
+              "traffic_pct": 0.8
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics are healthy with error=0.0012 and differential_p99=6.0ms, so increase traffic by 10%.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 10,
+              "traffic_pct": 0.9
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics are healthy with error=0.0012 and differential_p99=6.0ms, so increase traffic by 10%.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 11,
+              "traffic_pct": 1.0
+            }
+          ],
+          "episode_summary": "Reached 100% traffic without a confirmed canary breach. Final normalized score=0.9592.",
+          "outcome": "success",
+          "policy": "cautious_policy",
+          "rollback_assessment": {
+            "benchmark_rollback_at": null,
+            "relative_to_benchmark_point": "not_applicable",
+            "relative_to_first_breach": "not_applicable",
+            "rollback_action_taken": false,
+            "rollback_traffic_pct": null
+          },
+          "score": 0.9592,
+          "score_breakdown": {
+            "breach_detection_score": 0.3475,
+            "promotion_safety_score": 0.2625,
+            "reasoning_score": 0.1,
+            "rollback_timing_score": 0.2492,
+            "total_score": 0.9592
+          },
+          "seed": 0,
+          "steps": 12,
+          "task_id": "recovery"
+        },
+        "silent": {
+          "actions": [
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics are healthy with error=0.0010 and differential_p99=0.0ms, so increase traffic by 10%.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 0,
+              "traffic_pct": 0.0
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics are healthy with error=0.0010 and differential_p99=0.0ms, so increase traffic by 10%.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 1,
+              "traffic_pct": 0.1
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics are healthy with error=0.0010 and differential_p99=0.0ms, so increase traffic by 10%.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 2,
+              "traffic_pct": 0.2
+            },
+            {
+              "action_type": "hold",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics are drifting toward the guardrail with error=0.0018 and differential_p99=24.0ms, so hold for confirmation.",
+              "slo_breach_detected": false,
+              "state_assessment": "warning",
+              "step_number": 3,
+              "traffic_pct": 0.3
+            },
+            {
+              "action_type": "rollback",
+              "consecutive_holds": 1,
+              "reasoning": "The canary is in breach with error=0.0032 and differential_p99=68.0ms, so rollback immediately.",
+              "slo_breach_detected": true,
+              "state_assessment": "breach",
+              "step_number": 4,
+              "traffic_pct": 0.3
+            }
+          ],
+          "episode_summary": "Rolled back on the first confirmed breach relative to the benchmark rollback point at 40% traffic; the first confirmed breach was observed at 30% traffic. Final normalized score=0.9500.",
+          "outcome": "rollback",
+          "policy": "cautious_policy",
+          "rollback_assessment": {
+            "benchmark_rollback_at": 0.4,
+            "relative_to_benchmark_point": "early",
+            "relative_to_first_breach": "on_first_breach",
+            "rollback_action_taken": true,
+            "rollback_traffic_pct": 0.3
+          },
+          "score": 0.95,
+          "score_breakdown": {
+            "breach_detection_score": 0.344,
+            "promotion_safety_score": 0.258,
+            "reasoning_score": 0.1,
+            "rollback_timing_score": 0.248,
+            "total_score": 0.95
+          },
+          "seed": 0,
+          "steps": 5,
+          "task_id": "silent"
+        }
+      },
+      "scores": {
+        "easy": 0.9567,
+        "expert": 0.955,
+        "hard": 0.935,
+        "medium": 0.93,
+        "recovery": 0.9592,
+        "silent": 0.95
+      }
+    },
+    "shallow_baseline": {
+      "average": 0.8447,
+      "description": "Deterministic benchmark baseline that ignores warning windows.",
+      "details": {
+        "easy": {
+          "actions": [
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics remain healthy with error=0.0010 and differential_p99=0.0ms, so take the standard 10% promotion step.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 0,
+              "traffic_pct": 0.0
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics remain healthy with error=0.0010 and differential_p99=0.0ms, so take the standard 10% promotion step.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 1,
+              "traffic_pct": 0.1
+            },
+            {
+              "action_type": "rollback",
+              "consecutive_holds": 0,
+              "reasoning": "Alert count is 1, treating as a breach and rolling back.",
+              "slo_breach_detected": true,
+              "state_assessment": "breach",
+              "step_number": 2,
+              "traffic_pct": 0.2
+            }
+          ],
+          "episode_summary": "Rolled back on the first confirmed breach after the benchmark rollback point of 15% traffic; the first confirmed breach was observed at 20% traffic. Final normalized score=0.9567.",
+          "outcome": "rollback",
+          "policy": "shallow_baseline",
+          "rollback_assessment": {
+            "benchmark_rollback_at": 0.15,
+            "relative_to_benchmark_point": "late",
+            "relative_to_first_breach": "on_first_breach",
+            "rollback_action_taken": true,
+            "rollback_traffic_pct": 0.2
+          },
+          "score": 0.9567,
+          "score_breakdown": {
+            "breach_detection_score": 0.35,
+            "promotion_safety_score": 0.28,
+            "reasoning_score": 0.1,
+            "rollback_timing_score": 0.2267,
+            "total_score": 0.9567
+          },
+          "seed": 0,
+          "steps": 3,
+          "task_id": "easy"
+        },
+        "expert": {
+          "actions": [
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics remain healthy with error=0.0018 and differential_p99=6.0ms, so take the standard 10% promotion step.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 0,
+              "traffic_pct": 0.0
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics remain healthy with error=0.0018 and differential_p99=6.0ms, so take the standard 10% promotion step.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 1,
+              "traffic_pct": 0.1
+            },
+            {
+              "action_type": "rollback",
+              "consecutive_holds": 0,
+              "reasoning": "Alert count is 4, treating as a breach and rolling back.",
+              "slo_breach_detected": true,
+              "state_assessment": "phantom_alert",
+              "step_number": 2,
+              "traffic_pct": 0.2
+            }
+          ],
+          "episode_summary": "Rolled back before a confirmed breach was observed. Final normalized score=0.6967.",
+          "outcome": "rollback",
+          "policy": "shallow_baseline",
+          "rollback_assessment": {
+            "benchmark_rollback_at": 0.35,
+            "relative_to_benchmark_point": "early",
+            "relative_to_first_breach": "before_first_breach",
+            "rollback_action_taken": true,
+            "rollback_traffic_pct": 0.2
+          },
+          "score": 0.6967,
+          "score_breakdown": {
+            "breach_detection_score": 0.2467,
+            "promotion_safety_score": 0.1867,
+            "reasoning_score": 0.09,
+            "rollback_timing_score": 0.1733,
+            "total_score": 0.6967
+          },
+          "seed": 0,
+          "steps": 3,
+          "task_id": "expert"
+        },
+        "hard": {
+          "actions": [
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics remain healthy with error=0.0010 and differential_p99=0.0ms, so take the standard 10% promotion step.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 0,
+              "traffic_pct": 0.0
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics remain healthy with error=0.0010 and differential_p99=0.0ms, so take the standard 10% promotion step.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 1,
+              "traffic_pct": 0.1
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics remain healthy with error=0.0010 and differential_p99=0.0ms, so take the standard 10% promotion step.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 2,
+              "traffic_pct": 0.2
+            },
+            {
+              "action_type": "hold",
+              "consecutive_holds": 0,
+              "reasoning": "Stable and canary latencies spiked together with no differential gap, so hold for one more observation.",
+              "slo_breach_detected": false,
+              "state_assessment": "noise",
+              "step_number": 3,
+              "traffic_pct": 0.3
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 1,
+              "reasoning": "Metrics remain healthy with error=0.0026 and differential_p99=24.0ms, so take the standard 10% promotion step.",
+              "slo_breach_detected": false,
+              "state_assessment": "warning",
+              "step_number": 4,
+              "traffic_pct": 0.3
+            },
+            {
+              "action_type": "rollback",
+              "consecutive_holds": 0,
+              "reasoning": "Alert count is 1, treating as a breach and rolling back.",
+              "slo_breach_detected": true,
+              "state_assessment": "breach",
+              "step_number": 5,
+              "traffic_pct": 0.4
+            }
+          ],
+          "episode_summary": "Rolled back on the first confirmed breach after the benchmark rollback point of 30% traffic; the first confirmed breach was observed at 40% traffic. Final normalized score=0.8217. Shared infrastructure noise appeared during the episode. The transcript includes an explicit warning window before the final breach.",
+          "outcome": "rollback",
+          "policy": "shallow_baseline",
+          "rollback_assessment": {
+            "benchmark_rollback_at": 0.3,
+            "relative_to_benchmark_point": "late",
+            "relative_to_first_breach": "on_first_breach",
+            "rollback_action_taken": true,
+            "rollback_traffic_pct": 0.4
+          },
+          "score": 0.8217,
+          "score_breakdown": {
+            "breach_detection_score": 0.305,
+            "promotion_safety_score": 0.2233,
+            "reasoning_score": 0.1,
+            "rollback_timing_score": 0.1933,
+            "total_score": 0.8217
+          },
+          "seed": 0,
+          "steps": 6,
+          "task_id": "hard"
+        },
+        "medium": {
+          "actions": [
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics remain healthy with error=0.0010 and differential_p99=0.0ms, so take the standard 10% promotion step.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 0,
+              "traffic_pct": 0.0
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics remain healthy with error=0.0010 and differential_p99=0.0ms, so take the standard 10% promotion step.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 1,
+              "traffic_pct": 0.1
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics remain healthy with error=0.0010 and differential_p99=0.0ms, so take the standard 10% promotion step.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 2,
+              "traffic_pct": 0.2
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics remain healthy with error=0.0040 and differential_p99=15.0ms, so take the standard 10% promotion step.",
+              "slo_breach_detected": false,
+              "state_assessment": "warning",
+              "step_number": 3,
+              "traffic_pct": 0.3
+            },
+            {
+              "action_type": "rollback",
+              "consecutive_holds": 0,
+              "reasoning": "Alert count is 1, treating as a breach and rolling back.",
+              "slo_breach_detected": true,
+              "state_assessment": "breach",
+              "step_number": 4,
+              "traffic_pct": 0.4
+            }
+          ],
+          "episode_summary": "Rolled back on the first confirmed breach after the benchmark rollback point of 35% traffic; the first confirmed breach was observed at 40% traffic. Final normalized score=0.8460. The transcript includes an explicit warning window before the final breach.",
+          "outcome": "rollback",
+          "policy": "shallow_baseline",
+          "rollback_assessment": {
+            "benchmark_rollback_at": 0.35,
+            "relative_to_benchmark_point": "late",
+            "relative_to_first_breach": "on_first_breach",
+            "rollback_action_taken": true,
+            "rollback_traffic_pct": 0.4
+          },
+          "score": 0.846,
+          "score_breakdown": {
+            "breach_detection_score": 0.308,
+            "promotion_safety_score": 0.232,
+            "reasoning_score": 0.1,
+            "rollback_timing_score": 0.206,
+            "total_score": 0.846
+          },
+          "seed": 0,
+          "steps": 5,
+          "task_id": "medium"
+        },
+        "recovery": {
+          "actions": [
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics remain healthy with error=0.0010 and differential_p99=0.0ms, so take the standard 10% promotion step.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 0,
+              "traffic_pct": 0.0
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics remain healthy with error=0.0010 and differential_p99=0.0ms, so take the standard 10% promotion step.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 1,
+              "traffic_pct": 0.1
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics remain healthy with error=0.0010 and differential_p99=0.0ms, so take the standard 10% promotion step.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 2,
+              "traffic_pct": 0.2
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics remain healthy with error=0.0027 and differential_p99=33.0ms, so take the standard 10% promotion step.",
+              "slo_breach_detected": false,
+              "state_assessment": "warning",
+              "step_number": 3,
+              "traffic_pct": 0.3
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics remain healthy with error=0.0012 and differential_p99=6.0ms, so take the standard 10% promotion step.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 4,
+              "traffic_pct": 0.4
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics remain healthy with error=0.0012 and differential_p99=6.0ms, so take the standard 10% promotion step.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 5,
+              "traffic_pct": 0.5
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics remain healthy with error=0.0012 and differential_p99=6.0ms, so take the standard 10% promotion step.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 6,
+              "traffic_pct": 0.6
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics remain healthy with error=0.0012 and differential_p99=6.0ms, so take the standard 10% promotion step.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 7,
+              "traffic_pct": 0.7
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics remain healthy with error=0.0012 and differential_p99=6.0ms, so take the standard 10% promotion step.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 8,
+              "traffic_pct": 0.8
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics remain healthy with error=0.0012 and differential_p99=6.0ms, so take the standard 10% promotion step.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 9,
+              "traffic_pct": 0.9
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics remain healthy with error=0.0012 and differential_p99=6.0ms, so take the standard 10% promotion step.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 10,
+              "traffic_pct": 1.0
+            }
+          ],
+          "episode_summary": "Reached 100% traffic without a confirmed canary breach. Final normalized score=0.9109.",
+          "outcome": "success",
+          "policy": "shallow_baseline",
+          "rollback_assessment": {
+            "benchmark_rollback_at": null,
+            "relative_to_benchmark_point": "not_applicable",
+            "relative_to_first_breach": "not_applicable",
+            "rollback_action_taken": false,
+            "rollback_traffic_pct": null
+          },
+          "score": 0.9109,
+          "score_breakdown": {
+            "breach_detection_score": 0.3273,
+            "promotion_safety_score": 0.2491,
+            "reasoning_score": 0.1,
+            "rollback_timing_score": 0.2345,
+            "total_score": 0.9109
+          },
+          "seed": 0,
+          "steps": 11,
+          "task_id": "recovery"
+        },
+        "silent": {
+          "actions": [
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics remain healthy with error=0.0010 and differential_p99=0.0ms, so take the standard 10% promotion step.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 0,
+              "traffic_pct": 0.0
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics remain healthy with error=0.0010 and differential_p99=0.0ms, so take the standard 10% promotion step.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 1,
+              "traffic_pct": 0.1
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics remain healthy with error=0.0010 and differential_p99=0.0ms, so take the standard 10% promotion step.",
+              "slo_breach_detected": false,
+              "state_assessment": "healthy",
+              "step_number": 2,
+              "traffic_pct": 0.2
+            },
+            {
+              "action_type": "increase_10",
+              "consecutive_holds": 0,
+              "reasoning": "Metrics remain healthy with error=0.0018 and differential_p99=24.0ms, so take the standard 10% promotion step.",
+              "slo_breach_detected": false,
+              "state_assessment": "warning",
+              "step_number": 3,
+              "traffic_pct": 0.3
+            },
+            {
+              "action_type": "rollback",
+              "consecutive_holds": 0,
+              "reasoning": "The canary is breaching guardrails with error=0.0032 and differential_p99=68.0ms, so rollback now.",
+              "slo_breach_detected": true,
+              "state_assessment": "breach",
+              "step_number": 4,
+              "traffic_pct": 0.4
+            }
+          ],
+          "episode_summary": "Rolled back on the first confirmed breach at the benchmark rollback point of 40% traffic; the first confirmed breach was observed at 40% traffic. Final normalized score=0.8360.",
+          "outcome": "rollback",
+          "policy": "shallow_baseline",
+          "rollback_assessment": {
+            "benchmark_rollback_at": 0.4,
+            "relative_to_benchmark_point": "timely",
+            "relative_to_first_breach": "on_first_breach",
+            "rollback_action_taken": true,
+            "rollback_traffic_pct": 0.4
+          },
+          "score": 0.836,
+          "score_breakdown": {
+            "breach_detection_score": 0.296,
+            "promotion_safety_score": 0.228,
+            "reasoning_score": 0.1,
+            "rollback_timing_score": 0.212,
+            "total_score": 0.836
+          },
+          "seed": 0,
+          "steps": 5,
+          "task_id": "silent"
+        }
+      },
+      "scores": {
+        "easy": 0.9567,
+        "expert": 0.6967,
+        "hard": 0.8217,
+        "medium": 0.846,
+        "recovery": 0.9109,
+        "silent": 0.836
+      }
+    }
+  },
+  "recovery_task_ordering": [
+    "cautious_policy",
+    "shallow_baseline",
+    "aggressive_policy"
+  ],
+  "score_contract": {
+    "episode_score_definition": "running average of normalized step scores",
+    "episode_score_range": [
+      0.0,
+      1.0
+    ],
+    "per_step_score_range": [
+      0.0,
+      1.0
+    ]
+  },
+  "silent_task_ordering": [
+    "cautious_policy",
+    "shallow_baseline",
+    "aggressive_policy"
+  ]
+}

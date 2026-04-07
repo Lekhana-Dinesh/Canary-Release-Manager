@@ -33,7 +33,8 @@ class CanaryAction(Action):
         ...,
         min_length=15,
         description=(
-            "Short explanation referencing the metrics that motivated the decision."
+            "Short explanation kept for transcript clarity and reviewer inspection. "
+            "The public grader is driven by the structured fields, not by prose quality."
         ),
     )
     slo_breach_detected: bool = Field(
@@ -42,11 +43,27 @@ class CanaryAction(Action):
             "Whether the agent believes the current observation reflects a real canary breach."
         ),
     )
+    state_assessment: Literal[
+        "healthy",
+        "warning",
+        "noise",
+        "phantom_alert",
+        "breach",
+    ] = Field(
+        ...,
+        description=(
+            "Structured coarse-grained classification of the observed rollout state. "
+            "Use 'healthy' for safe promotion, 'warning' for ambiguous pre-breach drift or watch states, "
+            "'noise' for shared infrastructure distortion, 'phantom_alert' for false-positive monitoring noise, "
+            "and 'breach' for a confirmed rollback condition. The public contract intentionally stays coarse; "
+            "the grader may use richer internal subtypes without exposing them in the action schema."
+        ),
+    )
 
 
 class CanaryObservation(Observation):
     """
-    Full metric snapshot plus scoring feedback for the last action.
+    Agent-facing rollout telemetry plus operational guardrails.
     """
 
     traffic_pct: float = Field(
@@ -90,44 +107,27 @@ class CanaryObservation(Observation):
         ge=0,
         description="Number of active alerts for the currently observed state.",
     )
-
-    step_number: int = Field(default=0, description="Steps taken in this episode.")
-    step_reward: float = Field(
-        default=0.0,
-        description="Normalized score from the last action, always in [0.0, 1.0].",
-    )
-    cumulative_reward: float = Field(
-        default=0.0,
-        description="Running average episode score so far, always in [0.0, 1.0].",
-    )
-    is_done: bool = Field(default=False, description="True when the episode has ended.")
     consecutive_holds: int = Field(
         default=0,
         description="How many hold actions have been taken in a row.",
     )
-    actual_breach: bool = Field(
-        default=False,
-        description="Whether the pre-action observation represented a real canary breach.",
+    step_number: int = Field(
+        default=0,
+        description="Current rollout decision index for this episode.",
     )
-    policy_assessment: str = Field(
-        default="",
-        description="Short label describing how the previous action was assessed.",
-    )
-    reward_breakdown: dict[str, float] = Field(
-        default_factory=dict,
-        description="Per-component score breakdown for the previous action.",
-    )
-    step_explanation: str = Field(
-        default="",
-        description="Plain-English explanation of the previous action's score.",
-    )
-
-    task_id: str = Field(..., description="Task identifier, such as easy, medium, or hard.")
-    task_description: str = Field(
+    rollback_on_error_rate: float = Field(
         ...,
-        description="Task instructions shown to the agent.",
+        ge=0.0,
+        le=1.0,
+        description="Rollback guardrail for canary_error_rate.",
     )
-    feedback: str = Field(
-        default="",
-        description="Detailed feedback about what happened after the previous action.",
+    rollback_on_canary_p99_ms: float | None = Field(
+        default=None,
+        ge=0.0,
+        description="Rollback guardrail for absolute canary p99 latency when applicable.",
+    )
+    rollback_on_differential_p99_ms: float | None = Field(
+        default=None,
+        ge=0.0,
+        description="Rollback guardrail for canary-vs-stable p99 latency differential when applicable.",
     )
