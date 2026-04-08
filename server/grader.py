@@ -70,15 +70,14 @@ class GradeResult:
 
     @property
     def total_score(self) -> float:
-        return round(
-            _clamp(
-                self.breach_detection_score
-                + self.rollback_timing_score
-                + self.promotion_safety_score
-                + self.reasoning_score
-            ),
-            4,
+        raw = (
+            self.breach_detection_score
+            + self.rollback_timing_score
+            + self.promotion_safety_score
+            + self.reasoning_score
         )
+        # Validator requires scores strictly in (0, 1) — not 0.0, not 1.0
+        return round(_clamp(raw, 0.0001, 0.9999), 4)
 
     @property
     def reward_breakdown(self) -> dict[str, float]:

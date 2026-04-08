@@ -379,7 +379,8 @@ async def _run_task(
         )
 
     rewards_str = ",".join(f"{r:.2f}" for r in step_rewards)
-    avg_score = round(sum(step_rewards) / len(step_rewards), 4) if step_rewards else 0.0
+    raw_score = sum(step_rewards) / len(step_rewards) if step_rewards else 0.0
+    avg_score = round(max(0.0001, min(0.9999, raw_score)), 4)
     success_str = "true" if success and not degraded else "false"
     print(
         f"[END] success={success_str} steps={steps_taken} score={avg_score:.4f} rewards={rewards_str}",
