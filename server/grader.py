@@ -150,7 +150,7 @@ def _actual_breach(
 ) -> bool:
     diff_p99 = canary_p99 - stable_p99
 
-    if scenario.id in ("hard", "expert", "recovery"):
+    if scenario.id in ("hard", "expert", "recovery", "silent"):
         return (
             canary_error > SLO_ERROR_THRESHOLD
             or diff_p99 > SLO_DIFFERENTIAL_P99_THRESHOLD
@@ -184,7 +184,7 @@ def _warning_zone(
 
     if scenario.id == "hard":
         is_warning = (
-            traffic_pct >= 0.25
+            traffic_pct >= 0.20
             and (
                 diff_p99 >= 20.0
                 or diff_error >= 0.0015

@@ -73,7 +73,8 @@ def observation_is_warning_window(observation) -> bool:
     ):
         return False
 
-    if observation.traffic_pct < 0.30:
+    min_warning_traffic = 0.20 if observation_uses_differential_guardrail(observation) else 0.30
+    if observation.traffic_pct < min_warning_traffic:
         return False
 
     if observation_uses_absolute_latency_guardrail(observation):
