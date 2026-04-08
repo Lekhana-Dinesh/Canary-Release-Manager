@@ -458,7 +458,15 @@ async def run(env_base_url: str | None) -> list[dict[str, Any]]:
 
     client: OpenAI | None = None
     try:
-        client = _build_client(settings)
+        # Prefer direct os.environ access for the two canonical validator vars so
+        # any misconfiguration raises loudly rather than silently falling back.
+        _base = os.environ.get("API_BASE_URL", "").strip() or settings["api_base_url"]
+        _key = os.environ.get("API_KEY", "").strip() or os.environ.get("HF_TOKEN", "").strip()
+        if _key:
+            client = OpenAI(base_url=_base, api_key=_key)
+            proxy_required = True
+        else:
+            client = _build_client(settings)
     except Exception as exc:
         client = None
         startup_error = f"client_init_failed:{_sanitized_error(exc)}"
@@ -466,16 +474,14 @@ async def run(env_base_url: str | None) -> list[dict[str, Any]]:
     model_name = settings["model_name"]
     local_image_name = settings["local_image_name"]
 
-    # Startup probe: when proxy mode is required, attempt one real model call before
-    # the task loop. This guarantees at least one proxy-visible call even if env
-    # setup or reset fails on every task. Failure is recorded but does not abort —
-    # the task loop will also attempt calls and will surface the degraded state.
-    if proxy_required and client is not None and startup_error is None:
+    # Unconditional probe: fires whenever a client exists, before the task loop.
+    # Guarantees the proxy sees at least one call even if every task reset fails.
+    if client is not None:
         try:
             client.chat.completions.create(
                 model=model_name,
-                messages=[{"role": "user", "content": "ping"}],
-                max_tokens=1,
+                messages=[{"role": "user", "content": "Reply with the single word: ready"}],
+                max_tokens=5,
                 timeout=15.0,
             )
         except Exception as exc:

@@ -452,9 +452,9 @@ class InferenceTests(unittest.TestCase):
                 with redirect_stdout(stdout), redirect_stderr(stderr):
                     asyncio.run(run("http://127.0.0.1:7860"))
 
-        # First call must be the probe (max_tokens=1, message content "ping").
+        # First call must be the probe (max_tokens=5).
         self.assertGreaterEqual(len(factory.request_calls), 1)
-        self.assertEqual(factory.request_calls[0].get("max_tokens"), 1)
+        self.assertEqual(factory.request_calls[0].get("max_tokens"), 5)
 
     def test_startup_probe_fires_even_when_env_reset_fails(self) -> None:
         """If env reset fails on every task, the proxy must still see the startup probe call."""
@@ -471,7 +471,7 @@ class InferenceTests(unittest.TestCase):
 
         # Probe fired before the task loop — proxy has at least 1 call.
         self.assertGreaterEqual(len(factory.request_calls), 1)
-        self.assertEqual(factory.request_calls[0].get("max_tokens"), 1)
+        self.assertEqual(factory.request_calls[0].get("max_tokens"), 5)
         # Task itself had no steps due to reset failure.
         self.assertEqual(results[0]["steps"], 0)
 
