@@ -67,10 +67,12 @@
       "distinct_noise_steps": [],
       "distinct_phantom_steps": [],
       "distinct_recovery_clear_steps": [
+        3,
         4,
         5
       ],
       "distinct_warning_steps": [
+        2,
         3,
         4
       ]
@@ -1112,8 +1114,24 @@
         "first_breach": null,
         "first_phantom_alert": null,
         "first_shared_noise": null,
-        "first_warning": null,
-        "recovery_clear": null,
+        "first_warning": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0029,
+          "differential_error": 0.0019,
+          "differential_p99_ms": 35.0,
+          "public_state_assessment": "warning",
+          "step_number": 2,
+          "traffic_pct": 0.2
+        },
+        "recovery_clear": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0011,
+          "differential_error": 0.0001,
+          "differential_p99_ms": 10.0,
+          "public_state_assessment": "healthy",
+          "step_number": 3,
+          "traffic_pct": 0.3
+        },
         "trace_steps_captured": 10
       },
       "13": {
@@ -1195,8 +1213,24 @@
         "first_breach": null,
         "first_phantom_alert": null,
         "first_shared_noise": null,
-        "first_warning": null,
-        "recovery_clear": null,
+        "first_warning": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0029,
+          "differential_error": 0.0019,
+          "differential_p99_ms": 35.0,
+          "public_state_assessment": "warning",
+          "step_number": 2,
+          "traffic_pct": 0.2
+        },
+        "recovery_clear": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0011,
+          "differential_error": 0.0001,
+          "differential_p99_ms": 10.0,
+          "public_state_assessment": "healthy",
+          "step_number": 3,
+          "traffic_pct": 0.3
+        },
         "trace_steps_captured": 10
       },
       "3": {
@@ -1245,8 +1279,24 @@
         "first_breach": null,
         "first_phantom_alert": null,
         "first_shared_noise": null,
-        "first_warning": null,
-        "recovery_clear": null,
+        "first_warning": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0029,
+          "differential_error": 0.0019,
+          "differential_p99_ms": 35.0,
+          "public_state_assessment": "warning",
+          "step_number": 2,
+          "traffic_pct": 0.2
+        },
+        "recovery_clear": {
+          "alert_count": 0,
+          "canary_error_rate": 0.0011,
+          "differential_error": 0.0001,
+          "differential_p99_ms": 10.0,
+          "public_state_assessment": "healthy",
+          "step_number": 3,
+          "traffic_pct": 0.3
+        },
         "trace_steps_captured": 10
       },
       "7": {

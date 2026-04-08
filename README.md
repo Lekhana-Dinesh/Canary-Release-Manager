@@ -394,6 +394,7 @@ Environment variables read by the script:
 - `API_BASE_URL`
 - `MODEL_NAME`
 - `HF_TOKEN`
+- `API_KEY`
 - `LOCAL_IMAGE_NAME`
 
 Stdout contract:
@@ -406,9 +407,14 @@ There are no extra summary lines and no debug prints.
 
 Decision-source behavior is explicit:
 
-- if `API_BASE_URL`, `MODEL_NAME`, and `HF_TOKEN` are all unset, the script runs in explicit `model=fallback` mode
+- if both `API_KEY` and `HF_TOKEN` are unset, the script runs in explicit `model=fallback` mode
+- if both are present, `API_KEY` takes precedence and is passed to the OpenAI client; `HF_TOKEN` remains a backward-compatible fallback
+- `API_BASE_URL` defaults to `https://router.huggingface.co/v1`
+- `MODEL_NAME` defaults to `meta-llama/Llama-3.1-8B-Instruct`
 - if model output is malformed, that step is treated as a degraded model failure
 - if a configured model call fails or returns malformed output, the step still records a containment action for runner safety but the `[STEP] error=...` field is populated and the final `[END] success=false` makes the degraded run visible
+- if proxy mode is selected but no model call is ever attempted, the task ends with `[END] success=false` instead of silently looking like a successful model-backed run
+- if partial proxy configuration is present but credentials are unusable, the run fails honestly instead of silently downgrading to a successful fallback execution
 - `[END] success=true` means the inference runner completed without a degraded model failure; it does not mean the rollout outcome was promotion to 100% traffic
 
 The fallback policy is intentionally safer than `POST /baseline`. It is a runner safety net, not the benchmark baseline.
@@ -431,7 +437,7 @@ Run against a locally served app on `7860`:
 ```bash
 export API_BASE_URL="https://your-openai-compatible-endpoint/v1"
 export MODEL_NAME="your-model"
-export HF_TOKEN="your-token"
+export API_KEY="your-token"
 python inference.py --env-url http://127.0.0.1:7860
 ```
 

@@ -373,6 +373,7 @@ def _run_inference_sample(base_url: str, output_dir: Path) -> None:
     env["API_BASE_URL"] = ""
     env["MODEL_NAME"] = ""
     env["HF_TOKEN"] = ""
+    env["API_KEY"] = ""
 
     completed = subprocess.run(
         [sys.executable, "inference.py", "--env-url", base_url],

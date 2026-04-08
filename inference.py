@@ -40,7 +40,10 @@ else:
 
 TASK_IDS = PUBLIC_TASK_IDS
 ENV_BENCHMARK = "canary-release-env"
+DEFAULT_API_BASE_URL = "https://router.huggingface.co/v1"
 DEFAULT_MODEL_NAME = "meta-llama/Llama-3.1-8B-Instruct"
+MODEL_CALL_TIMEOUT_SECS = 45.0
+ENV_OPERATION_TIMEOUT_SECS = 30.0
 ALLOWED_ACTION_TYPES = {
     "increase_5",
     "increase_10",
@@ -62,26 +65,43 @@ class DecisionEnvelope:
     action: CanaryAction
     error: str | None = None
     degraded: bool = False
+    attempted_model_call: bool = False
 
 
-def _env_settings() -> dict[str, str]:
+def _env_settings() -> dict[str, Any]:
+    raw_api_base_url = os.getenv("API_BASE_URL", "").strip()
+    raw_model_name = os.getenv("MODEL_NAME", "").strip()
+    raw_hf_token = os.getenv("HF_TOKEN", "").strip()
+    raw_api_key = os.getenv("API_KEY", "").strip()
+
     return {
-        "api_base_url": os.getenv("API_BASE_URL", "").strip(),
-        "model_name": os.getenv("MODEL_NAME", "").strip(),
-        "api_key": (
-            os.getenv("API_KEY", "").strip()
-            or os.getenv("HF_TOKEN", "").strip()
-        ),
+        "api_base_url": raw_api_base_url or DEFAULT_API_BASE_URL,
+        "model_name": raw_model_name or DEFAULT_MODEL_NAME,
+        "api_key": raw_api_key or raw_hf_token,
         "local_image_name": (
             os.getenv("LOCAL_IMAGE_NAME", "").strip()
             or os.getenv("IMAGE_NAME", "").strip()
         ),
+        "proxy_config_present": bool(
+            raw_api_base_url or raw_model_name or raw_hf_token or raw_api_key
+        ),
+        "credential_source": (
+            "API_KEY"
+            if raw_api_key
+            else "HF_TOKEN"
+            if raw_hf_token
+            else ""
+        ),
     }
 
 
-def _use_model(settings: dict[str, str]) -> bool:
-    """Return True when API_BASE_URL and API_KEY are present (MODEL_NAME can default)."""
-    return bool(settings["api_base_url"] and settings["api_key"])
+def _proxy_requested(settings: dict[str, Any]) -> bool:
+    return bool(settings["proxy_config_present"])
+
+
+def _use_model(settings: dict[str, Any]) -> bool:
+    """Return True when proxy credentials are present and defaults can supply base/model."""
+    return bool(settings["api_key"])
 
 
 def _build_messages(observation) -> list[dict[str, str]]:
@@ -191,6 +211,7 @@ def _model_action(client: OpenAI, model_name: str, observation) -> CanaryAction:
         messages=_build_messages(observation),
         temperature=0,
         response_format={"type": "json_object"},
+        timeout=MODEL_CALL_TIMEOUT_SECS,
     )
     content = response.choices[0].message.content or "{}"
     return _parse_model_action(content, observation)
@@ -205,12 +226,16 @@ def _decide_action(
         return DecisionEnvelope(action=safe_fallback_action(observation))
 
     try:
-        return DecisionEnvelope(action=_model_action(client, model_name, observation))
+        return DecisionEnvelope(
+            action=_model_action(client, model_name, observation),
+            attempted_model_call=True,
+        )
     except Exception as exc:
         return DecisionEnvelope(
             action=safe_fallback_action(observation),
             error=f"model_call_failed:{_sanitized_error(exc)}",
             degraded=True,
+            attempted_model_call=True,
         )
 
 
@@ -276,14 +301,24 @@ def _make_image_runner(local_image_name: str):
     return _ImageEnvRunner(local_image_name)
 
 
+async def _await_with_timeout(awaitable, *, label: str):
+    try:
+        return await asyncio.wait_for(awaitable, timeout=ENV_OPERATION_TIMEOUT_SECS)
+    except asyncio.TimeoutError as exc:
+        raise RuntimeError(f"{label}_timeout") from exc
+
+
 async def _run_task(
     client: OpenAI | None,
     model_name: str,
     env_base_url: str | None,
     local_image_name: str,
     task_id: str,
+    *,
+    proxy_required: bool = False,
+    startup_error: str | None = None,
 ) -> dict[str, Any]:
-    display_model = model_name if client is not None else "fallback"
+    display_model = model_name if proxy_required else "fallback"
     print(f"[START] task={task_id} env={ENV_BENCHMARK} model={display_model}", flush=True)
 
     step_rewards: list[float] = []
@@ -292,6 +327,10 @@ async def _run_task(
     steps_taken = 0
     final_traffic_pct = 0.0
     step_failed = False
+    model_call_attempted = False
+    step_num = 0
+    env_runner = None
+    runner_entered = False
 
     try:
         if env_base_url:
@@ -301,39 +340,46 @@ async def _run_task(
         else:
             env_runner = _LocalEnvRunner()
 
-        async with env_runner as env:
-            observation = await env.reset(task=task_id, seed=0)
-            step_num = 0
+        env = await _await_with_timeout(env_runner.__aenter__(), label="runner_enter")
+        runner_entered = True
+        observation = await _await_with_timeout(
+            env.reset(task=task_id, seed=0),
+            label="reset",
+        )
 
-            while not observation.done:
-                step_num += 1
-                decision = _decide_action(client, model_name, observation)
-                action = decision.action
-                error_val = decision.error or "null"
-                reward = 0.0
-                done = False
+        while not observation.done:
+            step_num += 1
+            decision = _decide_action(client, model_name, observation)
+            action = decision.action
+            error_val = decision.error or "null"
+            reward = 0.0
+            done = False
+            model_call_attempted = model_call_attempted or decision.attempted_model_call
 
-                try:
-                    result = await env.step(action)
-                    next_obs = result.observation
-                    reward = round(float(result.reward or 0.0), 2)
-                    done = bool(result.done)
-                    observation = next_obs
-                except Exception as exc:
-                    done = True
-                    step_failed = True
-                    error_val = _sanitized_error(exc)
-
-                degraded = degraded or decision.degraded
-                step_rewards.append(reward)
-                done_str = "true" if done else "false"
-                print(
-                    f"[STEP] step={step_num} action={action.action_type} "
-                    f"reward={reward:.2f} done={done_str} error={error_val}",
-                    flush=True,
+            try:
+                result = await _await_with_timeout(
+                    env.step(action),
+                    label="step",
                 )
-                if done:
-                    break
+                next_obs = result.observation
+                reward = round(float(result.reward or 0.0), 2)
+                done = bool(result.done)
+                observation = next_obs
+            except Exception as exc:
+                done = True
+                step_failed = True
+                error_val = _sanitized_error(exc)
+
+            degraded = degraded or decision.degraded
+            step_rewards.append(reward)
+            done_str = "true" if done else "false"
+            print(
+                f"[STEP] step={step_num} action={action.action_type} "
+                f"reward={reward:.2f} done={done_str} error={error_val}",
+                flush=True,
+            )
+            if done:
+                break
 
         success = not step_failed
         steps_taken = step_num
@@ -341,8 +387,38 @@ async def _run_task(
 
     except Exception as exc:
         success = False
-        steps_taken = len(step_rewards)
+        steps_taken = step_num if step_num else len(step_rewards)
         print(f"task={task_id} env_error={_sanitized_error(exc)}", file=sys.stderr, flush=True)
+    finally:
+        if runner_entered and env_runner is not None:
+            try:
+                await _await_with_timeout(
+                    env_runner.__aexit__(None, None, None),
+                    label="close",
+                )
+            except Exception as exc:
+                print(
+                    f"task={task_id} close_error={_sanitized_error(exc)}",
+                    file=sys.stderr,
+                    flush=True,
+                )
+
+    if proxy_required and startup_error:
+        degraded = True
+        print(
+            f"task={task_id} proxy_error={startup_error}",
+            file=sys.stderr,
+            flush=True,
+        )
+
+    if proxy_required and not model_call_attempted:
+        success = False
+        degraded = True
+        print(
+            f"task={task_id} proxy_error=no_model_call_attempted",
+            file=sys.stderr,
+            flush=True,
+        )
 
     rewards_str = ",".join(f"{r:.2f}" for r in step_rewards)
     avg_score = round(sum(step_rewards) / len(step_rewards), 4) if step_rewards else 0.0
@@ -365,6 +441,7 @@ async def _run_task(
         "steps": steps_taken,
         "outcome": outcome,
         "degraded": degraded,
+        "attempted_model_call": model_call_attempted,
     }
 
 
@@ -374,8 +451,16 @@ async def main() -> list[dict[str, Any]]:
 
 async def run(env_base_url: str | None) -> list[dict[str, Any]]:
     settings = _env_settings()
-    client = _build_client(settings)
-    model_name = settings["model_name"] or DEFAULT_MODEL_NAME
+    proxy_required = _proxy_requested(settings)
+    startup_error = None
+    if proxy_required and not _use_model(settings):
+        startup_error = "missing_proxy_credentials"
+    try:
+        client = _build_client(settings)
+    except Exception as exc:
+        client = None
+        startup_error = f"client_init_failed:{_sanitized_error(exc)}"
+    model_name = settings["model_name"]
     results = []
 
     for task_id in TASK_IDS:
@@ -386,6 +471,8 @@ async def run(env_base_url: str | None) -> list[dict[str, Any]]:
                 env_base_url=env_base_url,
                 local_image_name=settings["local_image_name"],
                 task_id=task_id,
+                proxy_required=proxy_required,
+                startup_error=startup_error,
             )
         )
 
@@ -393,14 +480,14 @@ async def run(env_base_url: str | None) -> list[dict[str, Any]]:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--env-url",
-        default=None,
-        help="Base URL for a running environment. If omitted, LOCAL_IMAGE_NAME is used when set; otherwise the script falls back to an in-process environment.",
-    )
-    args = parser.parse_args()
     try:
+        parser = argparse.ArgumentParser(exit_on_error=False)
+        parser.add_argument(
+            "--env-url",
+            default=None,
+            help="Base URL for a running environment. If omitted, LOCAL_IMAGE_NAME is used when set; otherwise the script falls back to an in-process environment.",
+        )
+        args, _unknown = parser.parse_known_args()
         asyncio.run(run(args.env_url))
     except Exception as _top_exc:
         print(f"top-level error: {_top_exc}", file=sys.stderr, flush=True)
