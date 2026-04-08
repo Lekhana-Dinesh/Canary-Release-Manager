@@ -90,9 +90,13 @@ def _decision_mode(settings: dict[str, str]) -> str:
     if has_full_model_config:
         return "model"
 
-    raise ValueError(
-        "Incomplete model configuration. Set API_BASE_URL, MODEL_NAME, and HF_TOKEN together, or leave them all unset to run in explicit fallback mode."
+    # Incomplete config — warn and degrade to fallback rather than hard-crash.
+    print(
+        "[DEBUG] Incomplete model configuration (need API_BASE_URL, MODEL_NAME, and HF_TOKEN). "
+        "Falling back to rule-based policy.",
+        flush=True,
     )
+    return "fallback"
 
 
 def _build_messages(observation) -> list[dict[str, str]]:
@@ -408,4 +412,9 @@ if __name__ == "__main__":
         help="Base URL for a running environment. If omitted, LOCAL_IMAGE_NAME is used when set; otherwise the script falls back to an in-process environment.",
     )
     args = parser.parse_args()
-    asyncio.run(run(args.env_url))
+    try:
+        asyncio.run(run(args.env_url))
+    except Exception as _top_exc:
+        print(f"[DEBUG] Top-level exception: {_top_exc}", flush=True)
+        print("[END] success=false steps=0 score=0.0000 rewards=", flush=True)
+        sys.exit(1)
