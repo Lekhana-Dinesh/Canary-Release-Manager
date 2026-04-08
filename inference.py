@@ -39,7 +39,6 @@ else:
     from canary_release_env.server.scenarios import PUBLIC_TASK_IDS
 
 TASK_IDS = PUBLIC_TASK_IDS
-DEFAULT_ENV_BASE_URL = "http://127.0.0.1:7860"
 ENV_BENCHMARK = "canary-release-env"
 ALLOWED_ACTION_TYPES = {
     "increase_5",
@@ -79,27 +78,13 @@ def _env_settings() -> dict[str, str]:
     }
 
 
-def _decision_mode(settings: dict[str, str]) -> str:
-    model_fields = (
-        settings["api_base_url"],
-        settings["model_name"],
-        settings["api_key"],
+def _use_model(settings: dict[str, str]) -> bool:
+    """Return True only when all three model-config fields are present."""
+    return bool(
+        settings["api_base_url"]
+        and settings["model_name"]
+        and settings["api_key"]
     )
-    has_any_model_config = any(model_fields)
-    has_full_model_config = all(model_fields)
-
-    if not has_any_model_config:
-        return "fallback"
-    if has_full_model_config:
-        return "model"
-
-    # Incomplete config — warn and degrade to fallback rather than hard-crash.
-    print(
-        "[DEBUG] Incomplete model configuration (need API_BASE_URL, MODEL_NAME, and HF_TOKEN). "
-        "Falling back to rule-based policy.",
-        flush=True,
-    )
-    return "fallback"
 
 
 def _build_messages(observation) -> list[dict[str, str]]:
@@ -191,7 +176,7 @@ def _parse_model_action(raw_content: str, observation) -> CanaryAction:
 
 
 def _build_client(settings: dict[str, str]) -> OpenAI | None:
-    if not settings["api_base_url"] or not settings["api_key"]:
+    if not _use_model(settings):
         return None
     return OpenAI(
         base_url=settings["api_base_url"],
@@ -301,7 +286,7 @@ async def _run_task(
     local_image_name: str,
     task_id: str,
 ) -> dict[str, Any]:
-    display_model = model_name if model_name else "fallback"
+    display_model = model_name if client is not None else "fallback"
     print(f"[START] task={task_id} env={ENV_BENCHMARK} model={display_model}", flush=True)
 
     step_rewards: list[float] = []
@@ -309,6 +294,7 @@ async def _run_task(
     degraded = False
     steps_taken = 0
     final_traffic_pct = 0.0
+    step_failed = False
 
     try:
         if env_base_url:
@@ -338,6 +324,7 @@ async def _run_task(
                     observation = next_obs
                 except Exception as exc:
                     done = True
+                    step_failed = True
                     error_val = _sanitized_error(exc)
 
                 degraded = degraded or decision.degraded
@@ -351,13 +338,14 @@ async def _run_task(
                 if done:
                     break
 
-        success = True
+        success = not step_failed
         steps_taken = step_num
         final_traffic_pct = getattr(observation, "traffic_pct", 0.0)
 
-    except Exception:
+    except Exception as exc:
         success = False
         steps_taken = len(step_rewards)
+        print(f"task={task_id} env_error={_sanitized_error(exc)}", file=sys.stderr, flush=True)
 
     rewards_str = ",".join(f"{r:.2f}" for r in step_rewards)
     avg_score = round(sum(step_rewards) / len(step_rewards), 4) if step_rewards else 0.0
@@ -389,7 +377,6 @@ async def main() -> list[dict[str, Any]]:
 
 async def run(env_base_url: str | None) -> list[dict[str, Any]]:
     settings = _env_settings()
-    mode = _decision_mode(settings)
     client = _build_client(settings)
     results = []
 
@@ -418,6 +405,4 @@ if __name__ == "__main__":
     try:
         asyncio.run(run(args.env_url))
     except Exception as _top_exc:
-        print(f"[DEBUG] Top-level exception: {_top_exc}", flush=True)
-        print("[END] success=false steps=0 score=0.0000 rewards=", flush=True)
-        sys.exit(1)
+        print(f"top-level error: {_top_exc}", file=sys.stderr, flush=True)
