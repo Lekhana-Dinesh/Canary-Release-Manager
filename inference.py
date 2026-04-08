@@ -68,40 +68,6 @@ class DecisionEnvelope:
     attempted_model_call: bool = False
 
 
-def _env_settings() -> dict[str, Any]:
-    raw_api_base_url = os.getenv("API_BASE_URL", "").strip()
-    raw_model_name = os.getenv("MODEL_NAME", "").strip()
-    raw_hf_token = os.getenv("HF_TOKEN", "").strip()
-    raw_api_key = os.getenv("API_KEY", "").strip()
-
-    return {
-        "api_base_url": raw_api_base_url or DEFAULT_API_BASE_URL,
-        "model_name": raw_model_name or DEFAULT_MODEL_NAME,
-        "api_key": raw_api_key or raw_hf_token,
-        "local_image_name": (
-            os.getenv("LOCAL_IMAGE_NAME", "").strip()
-            or os.getenv("IMAGE_NAME", "").strip()
-        ),
-        "proxy_config_present": bool(
-            raw_api_base_url or raw_model_name or raw_hf_token or raw_api_key
-        ),
-        "credential_source": (
-            "API_KEY"
-            if raw_api_key
-            else "HF_TOKEN"
-            if raw_hf_token
-            else ""
-        ),
-    }
-
-
-def _proxy_requested(settings: dict[str, Any]) -> bool:
-    return bool(settings["proxy_config_present"])
-
-
-def _use_model(settings: dict[str, Any]) -> bool:
-    """Return True when proxy credentials are present and defaults can supply base/model."""
-    return bool(settings["api_key"])
 
 
 def _build_messages(observation) -> list[dict[str, str]]:
@@ -192,13 +158,6 @@ def _parse_model_action(raw_content: str, observation) -> CanaryAction:
     )
 
 
-def _build_client(settings: dict[str, str]) -> OpenAI | None:
-    if not _use_model(settings):
-        return None
-    return OpenAI(
-        base_url=settings["api_base_url"],
-        api_key=settings["api_key"],
-    )
 
 
 def _sanitized_error(exc: Exception) -> str:
@@ -449,24 +408,45 @@ async def main() -> list[dict[str, Any]]:
 
 
 async def run(env_base_url: str | None) -> list[dict[str, Any]]:
-    settings = _env_settings()
-    print(
-        f"[CONFIG] api_base_url={'set' if os.getenv('API_BASE_URL') else 'default'} "
-        f"api_key={'set(API_KEY)' if os.getenv('API_KEY') else 'set(HF_TOKEN)' if os.getenv('HF_TOKEN') else 'missing'} "
-        f"model_name={'set' if os.getenv('MODEL_NAME') else 'default'} "
-        f"effective_model={settings['model_name']}",
-        file=sys.stderr, flush=True,
-    )
-    proxy_required = _proxy_requested(settings)
-    startup_error = None
-    if proxy_required and not _use_model(settings):
-        startup_error = "missing_proxy_credentials"
+    # Log all env var names present (not values) for debugging
+    relevant = ["API_BASE_URL", "API_KEY", "HF_TOKEN", "MODEL_NAME",
+                "LOCAL_IMAGE_NAME", "IMAGE_NAME", "OPENAI_API_KEY", "OPENAI_BASE_URL"]
+    present = [k for k in relevant if os.environ.get(k)]
+    print(f"[ENV] present={present}", file=sys.stderr, flush=True)
+
+    # Build client exactly as the validator instructs
+    client: OpenAI | None = None
+    startup_error: str | None = None
+    proxy_required = False
     try:
-        client = _build_client(settings)
+        api_base_url = os.environ["API_BASE_URL"]
+        api_key = os.environ["API_KEY"]
+        client = OpenAI(base_url=api_base_url, api_key=api_key)
+        proxy_required = True
+        print(f"[ENV] client=proxy base_url_set=True", file=sys.stderr, flush=True)
+    except KeyError:
+        # Validator vars not present — try HF_TOKEN fallback
+        hf_token = os.environ.get("HF_TOKEN", "").strip()
+        if hf_token:
+            try:
+                fallback_base = os.environ.get("API_BASE_URL", DEFAULT_API_BASE_URL)
+                client = OpenAI(base_url=fallback_base, api_key=hf_token)
+                proxy_required = True
+                print(f"[ENV] client=hf_token_fallback", file=sys.stderr, flush=True)
+            except Exception as exc:
+                startup_error = f"client_init_failed:{_sanitized_error(exc)}"
+                print(f"[ENV] {startup_error}", file=sys.stderr, flush=True)
+        else:
+            print("[ENV] client=fallback no_credentials", file=sys.stderr, flush=True)
     except Exception as exc:
-        client = None
         startup_error = f"client_init_failed:{_sanitized_error(exc)}"
-    model_name = settings["model_name"]
+        print(f"[ENV] {startup_error}", file=sys.stderr, flush=True)
+
+    model_name = os.environ.get("MODEL_NAME", "").strip() or DEFAULT_MODEL_NAME
+    local_image_name = (
+        os.environ.get("LOCAL_IMAGE_NAME", "").strip()
+        or os.environ.get("IMAGE_NAME", "").strip()
+    )
     results = []
 
     for task_id in TASK_IDS:
@@ -475,7 +455,7 @@ async def run(env_base_url: str | None) -> list[dict[str, Any]]:
                 client=client,
                 model_name=model_name,
                 env_base_url=env_base_url,
-                local_image_name=settings["local_image_name"],
+                local_image_name=local_image_name,
                 task_id=task_id,
                 proxy_required=proxy_required,
                 startup_error=startup_error,
