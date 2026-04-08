@@ -40,6 +40,7 @@ else:
 
 TASK_IDS = PUBLIC_TASK_IDS
 ENV_BENCHMARK = "canary-release-env"
+DEFAULT_MODEL_NAME = "meta-llama/Llama-3.1-8B-Instruct"
 ALLOWED_ACTION_TYPES = {
     "increase_5",
     "increase_10",
@@ -79,12 +80,8 @@ def _env_settings() -> dict[str, str]:
 
 
 def _use_model(settings: dict[str, str]) -> bool:
-    """Return True only when all three model-config fields are present."""
-    return bool(
-        settings["api_base_url"]
-        and settings["model_name"]
-        and settings["api_key"]
-    )
+    """Return True when API_BASE_URL and API_KEY are present (MODEL_NAME can default)."""
+    return bool(settings["api_base_url"] and settings["api_key"])
 
 
 def _build_messages(observation) -> list[dict[str, str]]:
@@ -378,13 +375,14 @@ async def main() -> list[dict[str, Any]]:
 async def run(env_base_url: str | None) -> list[dict[str, Any]]:
     settings = _env_settings()
     client = _build_client(settings)
+    model_name = settings["model_name"] or DEFAULT_MODEL_NAME
     results = []
 
     for task_id in TASK_IDS:
         results.append(
             await _run_task(
                 client=client,
-                model_name=settings["model_name"],
+                model_name=model_name,
                 env_base_url=env_base_url,
                 local_image_name=settings["local_image_name"],
                 task_id=task_id,
