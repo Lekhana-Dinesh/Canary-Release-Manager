@@ -447,6 +447,21 @@ async def run(env_base_url: str | None) -> list[dict[str, Any]]:
         os.environ.get("LOCAL_IMAGE_NAME", "").strip()
         or os.environ.get("IMAGE_NAME", "").strip()
     )
+
+    # Forced test call — ensures the proxy registers at least one request
+    # even if the task loop degrades for any reason.
+    if client is not None:
+        try:
+            client.chat.completions.create(
+                model=model_name,
+                messages=[{"role": "user", "content": "Reply with the single word: ready"}],
+                max_tokens=5,
+                timeout=15.0,
+            )
+            print("[PROXY] test call succeeded", file=sys.stderr, flush=True)
+        except Exception as exc:
+            print(f"[PROXY] test call failed: {_sanitized_error(exc)}", file=sys.stderr, flush=True)
+
     results = []
 
     for task_id in TASK_IDS:
