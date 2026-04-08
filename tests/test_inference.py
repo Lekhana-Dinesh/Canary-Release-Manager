@@ -84,6 +84,11 @@ class CloseFailEnv(FakeEnv):
         raise RuntimeError("close failed")
 
 
+class ResetFailEnv(FakeEnv):
+    async def reset(self, task: str, seed: int = 0):
+        raise RuntimeError("reset failed")
+
+
 class FakeChatCompletions:
     def __init__(self, calls: list[dict]) -> None:
         self.calls = calls
@@ -277,7 +282,7 @@ class InferenceTests(unittest.TestCase):
 
         lines = [line.strip() for line in stdout.getvalue().splitlines() if line.strip()]
         self.assertEqual(lines[0], "[START] task=easy env=canary-release-env model=test-model")
-        self.assertEqual(lines[1], "[END] success=false steps=0 score=0.0000 rewards=")
+        self.assertEqual(lines[1], "[END] success=false steps=0 score=0.0001 rewards=")
         self.assertIn("proxy_error=no_model_call_attempted", stderr.getvalue())
         self.assertFalse(result["attempted_model_call"])
         self.assertEqual(result["outcome"], "error")
@@ -330,7 +335,8 @@ class InferenceTests(unittest.TestCase):
             factory.init_calls,
             [{"base_url": "https://proxy.example.invalid/v1", "api_key": "validator-key"}],
         )
-        self.assertEqual(len(factory.request_calls), 1)
+        # At least 2: startup probe + 1 task step (FakeEnv finishes in 1 step).
+        self.assertGreaterEqual(len(factory.request_calls), 2)
         self.assertEqual(factory.request_calls[0]["model"], "validator-model")
         self.assertEqual(results[0]["attempted_model_call"], True)
         lines = [line.strip() for line in stdout.getvalue().splitlines() if line.strip()]
@@ -361,7 +367,8 @@ class InferenceTests(unittest.TestCase):
             factory.init_calls,
             [{"base_url": DEFAULT_API_BASE_URL, "api_key": "hf-validator-key"}],
         )
-        self.assertEqual(len(factory.request_calls), 1)
+        # At least 2: startup probe + 1 task step (FakeEnv finishes in 1 step).
+        self.assertGreaterEqual(len(factory.request_calls), 2)
         self.assertEqual(factory.request_calls[0]["model"], DEFAULT_MODEL_NAME)
         self.assertTrue(results[0]["attempted_model_call"])
         self.assertEqual(stderr.getvalue().strip(), "")
@@ -430,6 +437,121 @@ class InferenceTests(unittest.TestCase):
         self.assertEqual(lines[-1], "[END] success=true steps=1 score=0.8700 rewards=0.87")
         self.assertEqual(stderr.getvalue().strip(), "")
         self.assertFalse(results[0]["attempted_model_call"])
+
+
+    def test_startup_probe_fires_before_task_loop(self) -> None:
+        """Startup probe must register at least one proxy call even if task step also fires."""
+        factory = OpenAIFactory()
+        stdout = io.StringIO()
+        stderr = io.StringIO()
+
+        with patch.dict(os.environ, {"API_KEY": "probe-key"}, clear=True):
+            with patch("inference.OpenAI", factory), patch("inference.CanaryEnv", FakeEnv), patch(
+                "inference.TASK_IDS", ["easy"]
+            ):
+                with redirect_stdout(stdout), redirect_stderr(stderr):
+                    asyncio.run(run("http://127.0.0.1:7860"))
+
+        # First call must be the probe (max_tokens=1, message content "ping").
+        self.assertGreaterEqual(len(factory.request_calls), 1)
+        self.assertEqual(factory.request_calls[0].get("max_tokens"), 1)
+
+    def test_startup_probe_fires_even_when_env_reset_fails(self) -> None:
+        """If env reset fails on every task, the proxy must still see the startup probe call."""
+        factory = OpenAIFactory()
+        stdout = io.StringIO()
+        stderr = io.StringIO()
+
+        with patch.dict(os.environ, {"API_KEY": "probe-key"}, clear=True):
+            with patch("inference.OpenAI", factory), patch(
+                "inference.CanaryEnv", ResetFailEnv
+            ), patch("inference.TASK_IDS", ["easy"]):
+                with redirect_stdout(stdout), redirect_stderr(stderr):
+                    results = asyncio.run(run("http://127.0.0.1:7860"))
+
+        # Probe fired before the task loop — proxy has at least 1 call.
+        self.assertGreaterEqual(len(factory.request_calls), 1)
+        self.assertEqual(factory.request_calls[0].get("max_tokens"), 1)
+        # Task itself had no steps due to reset failure.
+        self.assertEqual(results[0]["steps"], 0)
+
+    def test_zero_step_score_is_never_exactly_zero(self) -> None:
+        """When no steps run, [END] score must be 0.0001, not 0.0000."""
+        stdout = io.StringIO()
+        with patch("inference.CanaryEnv", DoneEnv):
+            with redirect_stdout(stdout):
+                result = asyncio.run(
+                    _run_task(
+                        client=None,
+                        model_name=DEFAULT_MODEL_NAME,
+                        env_base_url="http://127.0.0.1:7860",
+                        local_image_name="",
+                        task_id="easy",
+                        proxy_required=False,
+                    )
+                )
+
+        end_line = next(
+            l.strip()
+            for l in stdout.getvalue().splitlines()
+            if l.strip().startswith("[END]")
+        )
+        self.assertNotIn("score=0.0000", end_line)
+        self.assertEqual(result["score"], 0.0001)
+
+    def test_score_range_is_strictly_inside_open_interval(self) -> None:
+        """Any [END] score must be strictly inside (0, 1) — never 0.0 or 1.0."""
+        stream = io.StringIO()
+        with patch("inference.CanaryEnv", FakeEnv):
+            with redirect_stdout(stream):
+                asyncio.run(
+                    _run_task(
+                        client=None,
+                        model_name=DEFAULT_MODEL_NAME,
+                        env_base_url="http://127.0.0.1:7860",
+                        local_image_name="",
+                        task_id="easy",
+                        proxy_required=False,
+                    )
+                )
+
+        end_line = next(
+            l.strip()
+            for l in stream.getvalue().splitlines()
+            if l.strip().startswith("[END]")
+        )
+        score_str = next(
+            part.split("=")[1] for part in end_line.split() if part.startswith("score=")
+        )
+        score = float(score_str)
+        self.assertGreater(score, 0.0)
+        self.assertLess(score, 1.0)
+
+    def test_reset_failure_does_not_look_successful_and_score_not_zero(self) -> None:
+        """If env reset fails, task is not successful and score is not exactly 0.0."""
+        stdout = io.StringIO()
+        stderr = io.StringIO()
+        with patch("inference.CanaryEnv", ResetFailEnv):
+            with redirect_stdout(stdout), redirect_stderr(stderr):
+                result = asyncio.run(
+                    _run_task(
+                        client=object(),
+                        model_name="test-model",
+                        env_base_url="http://127.0.0.1:7860",
+                        local_image_name="",
+                        task_id="easy",
+                        proxy_required=True,
+                    )
+                )
+
+        lines = [l.strip() for l in stdout.getvalue().splitlines() if l.strip()]
+        self.assertEqual(lines[0], "[START] task=easy env=canary-release-env model=test-model")
+        end_line = lines[-1]
+        self.assertTrue(end_line.startswith("[END]"))
+        self.assertIn("success=false", end_line)
+        self.assertNotIn("score=0.0000", end_line)
+        self.assertGreater(result["score"], 0.0)
+        self.assertIn("proxy_error=no_model_call_attempted", stderr.getvalue())
 
 
 if __name__ == "__main__":
