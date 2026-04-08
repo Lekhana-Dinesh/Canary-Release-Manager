@@ -41,7 +41,7 @@ else:
 TASK_IDS = PUBLIC_TASK_IDS
 ENV_BENCHMARK = "canary-release-env"
 DEFAULT_API_BASE_URL = "https://router.huggingface.co/v1"
-DEFAULT_MODEL_NAME = "meta-llama/Llama-3.1-8B-Instruct"
+DEFAULT_MODEL_NAME = "gpt-4o-mini"
 MODEL_CALL_TIMEOUT_SECS = 45.0
 ENV_OPERATION_TIMEOUT_SECS = 30.0
 ALLOWED_ACTION_TYPES = {
@@ -210,7 +210,6 @@ def _model_action(client: OpenAI, model_name: str, observation) -> CanaryAction:
         model=model_name,
         messages=_build_messages(observation),
         temperature=0,
-        response_format={"type": "json_object"},
         timeout=MODEL_CALL_TIMEOUT_SECS,
     )
     content = response.choices[0].message.content or "{}"
@@ -451,6 +450,13 @@ async def main() -> list[dict[str, Any]]:
 
 async def run(env_base_url: str | None) -> list[dict[str, Any]]:
     settings = _env_settings()
+    print(
+        f"[CONFIG] api_base_url={'set' if os.getenv('API_BASE_URL') else 'default'} "
+        f"api_key={'set(API_KEY)' if os.getenv('API_KEY') else 'set(HF_TOKEN)' if os.getenv('HF_TOKEN') else 'missing'} "
+        f"model_name={'set' if os.getenv('MODEL_NAME') else 'default'} "
+        f"effective_model={settings['model_name']}",
+        file=sys.stderr, flush=True,
+    )
     proxy_required = _proxy_requested(settings)
     startup_error = None
     if proxy_required and not _use_model(settings):
