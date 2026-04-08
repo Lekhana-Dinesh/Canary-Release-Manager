@@ -68,7 +68,10 @@ def _env_settings() -> dict[str, str]:
     return {
         "api_base_url": os.getenv("API_BASE_URL", "").strip(),
         "model_name": os.getenv("MODEL_NAME", "").strip(),
-        "hf_token": os.getenv("HF_TOKEN", "").strip(),
+        "api_key": (
+            os.getenv("API_KEY", "").strip()
+            or os.getenv("HF_TOKEN", "").strip()
+        ),
         "local_image_name": (
             os.getenv("LOCAL_IMAGE_NAME", "").strip()
             or os.getenv("IMAGE_NAME", "").strip()
@@ -80,7 +83,7 @@ def _decision_mode(settings: dict[str, str]) -> str:
     model_fields = (
         settings["api_base_url"],
         settings["model_name"],
-        settings["hf_token"],
+        settings["api_key"],
     )
     has_any_model_config = any(model_fields)
     has_full_model_config = all(model_fields)
@@ -188,11 +191,11 @@ def _parse_model_action(raw_content: str, observation) -> CanaryAction:
 
 
 def _build_client(settings: dict[str, str]) -> OpenAI | None:
-    if not settings["api_base_url"] or not settings["hf_token"]:
+    if not settings["api_base_url"] or not settings["api_key"]:
         return None
     return OpenAI(
         base_url=settings["api_base_url"],
-        api_key=settings["hf_token"],
+        api_key=settings["api_key"],
     )
 
 
