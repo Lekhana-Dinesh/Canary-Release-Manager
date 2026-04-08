@@ -68,6 +68,45 @@ class DecisionEnvelope:
     attempted_model_call: bool = False
 
 
+def _env_settings() -> dict[str, Any]:
+    raw_api_base_url = os.getenv("API_BASE_URL", "").strip()
+    raw_model_name = os.getenv("MODEL_NAME", "").strip()
+    raw_hf_token = os.getenv("HF_TOKEN", "").strip()
+    raw_api_key = os.getenv("API_KEY", "").strip()
+
+    return {
+        "api_base_url": raw_api_base_url or DEFAULT_API_BASE_URL,
+        "model_name": raw_model_name or DEFAULT_MODEL_NAME,
+        "api_key": raw_api_key or raw_hf_token,
+        "local_image_name": (
+            os.getenv("LOCAL_IMAGE_NAME", "").strip()
+            or os.getenv("IMAGE_NAME", "").strip()
+        ),
+        "proxy_config_present": bool(
+            raw_api_base_url or raw_model_name or raw_hf_token or raw_api_key
+        ),
+        "credential_source": (
+            "API_KEY" if raw_api_key else "HF_TOKEN" if raw_hf_token else ""
+        ),
+    }
+
+
+def _proxy_requested(settings: dict[str, Any]) -> bool:
+    return bool(settings["proxy_config_present"])
+
+
+def _use_model(settings: dict[str, Any]) -> bool:
+    return bool(settings["api_key"])
+
+
+def _build_client(settings: dict[str, Any]) -> OpenAI | None:
+    if not _use_model(settings):
+        return None
+    return OpenAI(
+        base_url=settings["api_base_url"],
+        api_key=settings["api_key"],
+    )
+
 
 
 def _build_messages(observation) -> list[dict[str, str]]:
@@ -380,7 +419,7 @@ async def _run_task(
 
     rewards_str = ",".join(f"{r:.2f}" for r in step_rewards)
     raw_score = sum(step_rewards) / len(step_rewards) if step_rewards else 0.0
-    avg_score = round(max(0.0001, min(0.9999, raw_score)), 4)
+    avg_score = round(raw_score, 4)
     success_str = "true" if success and not degraded else "false"
     print(
         f"[END] success={success_str} steps={steps_taken} score={avg_score:.4f} rewards={rewards_str}",
@@ -409,62 +448,24 @@ async def main() -> list[dict[str, Any]]:
 
 
 async def run(env_base_url: str | None) -> list[dict[str, Any]]:
-    # Log all env var names present (not values) for debugging
-    relevant = ["API_BASE_URL", "API_KEY", "HF_TOKEN", "MODEL_NAME",
-                "LOCAL_IMAGE_NAME", "IMAGE_NAME", "OPENAI_API_KEY", "OPENAI_BASE_URL"]
-    present = [k for k in relevant if os.environ.get(k)]
-    print(f"[ENV] present={present}", file=sys.stderr, flush=True)
-
-    # Build client exactly as the validator instructs
-    client: OpenAI | None = None
+    settings = _env_settings()
+    proxy_required = _proxy_requested(settings)
     startup_error: str | None = None
-    proxy_required = False
+
+    if proxy_required and not _use_model(settings):
+        startup_error = "missing_proxy_credentials"
+
+    client: OpenAI | None = None
     try:
-        api_base_url = os.environ["API_BASE_URL"]
-        api_key = os.environ["API_KEY"]
-        client = OpenAI(base_url=api_base_url, api_key=api_key)
-        proxy_required = True
-        print(f"[ENV] client=proxy base_url_set=True", file=sys.stderr, flush=True)
-    except KeyError:
-        # Validator vars not present — try HF_TOKEN fallback
-        hf_token = os.environ.get("HF_TOKEN", "").strip()
-        if hf_token:
-            try:
-                fallback_base = os.environ.get("API_BASE_URL", DEFAULT_API_BASE_URL)
-                client = OpenAI(base_url=fallback_base, api_key=hf_token)
-                proxy_required = True
-                print(f"[ENV] client=hf_token_fallback", file=sys.stderr, flush=True)
-            except Exception as exc:
-                startup_error = f"client_init_failed:{_sanitized_error(exc)}"
-                print(f"[ENV] {startup_error}", file=sys.stderr, flush=True)
-        else:
-            print("[ENV] client=fallback no_credentials", file=sys.stderr, flush=True)
+        client = _build_client(settings)
     except Exception as exc:
+        client = None
         startup_error = f"client_init_failed:{_sanitized_error(exc)}"
-        print(f"[ENV] {startup_error}", file=sys.stderr, flush=True)
 
-    model_name = os.environ.get("MODEL_NAME", "").strip() or DEFAULT_MODEL_NAME
-    local_image_name = (
-        os.environ.get("LOCAL_IMAGE_NAME", "").strip()
-        or os.environ.get("IMAGE_NAME", "").strip()
-    )
-
-    # Forced test call — ensures the proxy registers at least one request
-    # even if the task loop degrades for any reason.
-    if client is not None:
-        try:
-            client.chat.completions.create(
-                model=model_name,
-                messages=[{"role": "user", "content": "Reply with the single word: ready"}],
-                max_tokens=5,
-                timeout=15.0,
-            )
-            print("[PROXY] test call succeeded", file=sys.stderr, flush=True)
-        except Exception as exc:
-            print(f"[PROXY] test call failed: {_sanitized_error(exc)}", file=sys.stderr, flush=True)
+    model_name = settings["model_name"]
+    local_image_name = settings["local_image_name"]
 
     results = []
-
     for task_id in TASK_IDS:
         results.append(
             await _run_task(
