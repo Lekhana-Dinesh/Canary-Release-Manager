@@ -10,7 +10,54 @@ license: apache-2.0
 ---
 # Canary Release Manager
 
-Canary Release Manager is a production-minded OpenEnv benchmark for canary rollout decision-making. An agent observes stable-versus-canary service metrics for a new recommendation model and decides whether to:
+Canary Release Manager is a production-minded **OpenEnv benchmark for canary rollout decision-making**. An agent observes stable-versus-canary telemetry for a new recommendation model and chooses whether to increase traffic, hold, or roll back.
+
+This is **not** a live rollout controller. It is a reusable evaluation and training environment for comparing rollout agents, scripted policies, and LLM decision behavior under realistic canary ambiguity.
+
+## Submission Links
+- **Runtime API Health Check:** https://aparnasingha400-canary-release-manager.hf.space/health
+- **Live OpenEnv Space:** https://huggingface.co/spaces/aparnasingha400/canary-release-manager
+- **API Docs:** https://aparnasingha400-canary-release-manager.hf.space/docs
+- **Tasks Endpoint:** https://aparnasingha400-canary-release-manager.hf.space/tasks
+- **GitHub Repository:** https://github.com/Lekhana-Dinesh/Canary-Release-Manager
+- **Hackathon Blog Writeup:** https://huggingface.co/spaces/aparnasingha400/canary-release-manager/blob/main/Blog.md
+- **Training Notebook:** https://colab.research.google.com/drive/1h-SPUGrxL160yXugjWUM0yi7tF0iN5OX?usp=sharing
+- **Trained Model, Results, and Evidence:** https://huggingface.co/aparnasingha400/canary-7b-job-output-v2
+- **Training Evidence Folder:** https://huggingface.co/aparnasingha400/canary-7b-job-output-v2/tree/main/evidence
+- **Training Results JSON:** https://huggingface.co/aparnasingha400/canary-7b-job-output-v2/blob/main/evidence/canary_grpo_results.json
+- **Expert Trained Trace:** https://huggingface.co/aparnasingha400/canary-7b-job-output-v2/blob/main/evidence/expert_trained_trace.md
+- **Demo Video:** Not included; `Blog.md` is the official writeup.
+
+## Diagnostic Before/After Demo
+
+We also ran a small qualitative before/after demo on two individual heldout cases. This notebook is intended as a diagnostic sanity check, not the main evidence of improvement.
+
+| Case | Base Model Reward | Trained Model Reward | Change |
+|---|---:|---:|---:|
+| hard / seed 903 | 0.3333 | 0.3333 | +0.0000 |
+| expert / seed 905 | 0.3100 | 0.3333 | +0.0233 |
+
+Interpretation: this tiny two-case demo does not show a strong behavioral improvement by itself. The main training evidence is the aggregate heldout evaluation from the final results repo, where the average score improved from **0.3457** before training to **0.6553** after SFT + GRPO.
+
+
+
+## 60-Second Reviewer Path
+
+1. Open the **Live OpenEnv Space** and verify the API is reachable.
+2. Read the **Hackathon Blog Writeup** for the problem story and training narrative.
+3. Review the **Final Training Results** and plots below.
+4. Inspect the **Training Results JSON** and **Trained Model + Results Repo** for reproducible artifacts.
+5. Use the API docs or endpoints to inspect the environment contract.
+
+## Theme Fit
+
+This project fits **Theme #3.1 — World Modeling / Professional Tasks**.
+
+The agent interacts with a dynamic professional system, observes partial telemetry, updates its belief about rollout health, and takes sequential actions under uncertainty. The benchmark tests whether an LLM can improve on a realistic operational decision loop rather than a static Q&A task.
+
+## What The Environment Tests
+
+At each step, the agent sees canary and stable service telemetry and must choose one rollout action:
 
 - `increase_5`
 - `increase_10`
@@ -18,41 +65,136 @@ Canary Release Manager is a production-minded OpenEnv benchmark for canary rollo
 - `hold`
 - `rollback`
 
-This project is not a live rollout controller.
+The benchmark is designed around ambiguous deployment states that simple threshold checks mishandle:
 
-This project is a reusable evaluation environment for comparing rollout agents, scripted policies, and decision-support behavior under realistic canary ambiguity.
+- shared infrastructure noise where both stable and canary degrade
+- phantom alert storms where alert count is high but raw metrics are healthy
+- slow canary-specific drift before a hard SLO breach
+- transient latency spikes that recover without rollback
+- silent differential regressions with weak alert support
 
-## Overview
+## Training Pipeline
 
-The benchmark is built around three properties that matter in real rollout reviews:
+The final run trained a **Qwen2.5-7B LoRA adapter** using:
 
-- rollout decisions are sequential and stateful
-- absolute thresholds are not enough; stable-versus-canary comparisons matter
-- the hardest failures are not immediate crashes, but ambiguous states where hold, small probes, and rollback timing all matter
+1. **SFT warm-start** to teach the strict JSON action format and prevent all-zero reward collapse.
+2. **GRPO / RLVR** using verifier-backed rewards from the Canary Release Manager environment.
+3. **Heldout seed evaluation** to compare the same model before and after training.
+4. **Generalization and stress checks** to detect brittle behavior outside the main heldout seeds.
+5. **Artifact export** with plots, JSON results, model adapter files, and an expert trace.
 
-The environment is deterministic by design. The grader always evaluates the action against the observation the agent just saw, never the post-action state.
+The model was not trained only against a static label table. During GRPO, generated actions were executed against the environment and scored by the verifier.
 
-## Why Canary Decisions Are Hard
+## Final Training Results
 
-Real canary rollout decisions are not just threshold checks.
+Final model artifact: **Qwen2.5-7B LoRA adapter** trained with SFT warm-start + GRPO.
 
-- A shared infrastructure spike can make both stable and canary look bad at the same time.
-- A gradual regression can create a warning window where a 5% probe is safer than a full 10% promotion.
-- A post-noise differential drift can make `hold` the correct action even though no hard breach has fired yet.
+- **Base model:** `unsloth/Qwen2.5-7B-Instruct`
+- **Training stack:** Unsloth + TRL + PEFT/LoRA + OpenEnv verifier reward
+- **Hardware:** NVIDIA A100-SXM4-80GB
+- **Environment calls:** `2109`
+- **GRPO steps:** `80`
+- **GRPO runtime:** `460.03s`
+- **Final GRPO train loss:** `0.00210`
+- **Parse-ok telemetry during RL:** `100%`
+- **Reward error rate:** `0.0`
+- **Diagnostic verdict:** `PASS`
 
-The benchmark is designed so agents must separate healthy promotion, watch states, shared noise, and true canary breach.
+### Heldout Evaluation
 
-## Project Positioning
+| Task | Before Training | After SFT | Final After GRPO | Change vs Before |
+|---|---:|---:|---:|---:|
+| easy | 0.0500 | 0.6456 | 0.6800 | +0.6300 |
+| medium | 0.0500 | 0.5667 | 0.7064 | +0.6564 |
+| hard | 0.7298 | 0.6081 | 0.6358 | -0.0940 |
+| expert | 0.2907 | 0.7358 | 0.6461 | +0.3554 |
+| recovery | 0.4605 | 0.5954 | 0.7282 | +0.2677 |
+| silent | 0.4931 | 0.5113 | 0.5353 | +0.0422 |
+| **average** | **0.3457** | **0.6105** | **0.6553** | **+0.3096** |
 
-Canary Release Manager is intended to feel like an internal benchmark asset:
+### Generalization / Stress
 
-- validator-safe Phase 1 surface
-- deterministic public grading
-- interpretable action space
-- inspectable transcripts and episode summaries
-- enough realism to compare shallow versus thoughtful policies
+| Evaluation Set | Average Score |
+|---|---:|
+| Heldout final after GRPO | 0.6553 |
+| Generalization seeds | 0.6553 |
+| Stress seeds | 0.6544 |
+| Ablation subset | 0.6709 |
 
-It deliberately avoids live orchestration, persistent databases, RL infrastructure, or UI work.
+> Important interpretation: the deterministic `/baseline` endpoint is a **hand-coded reference policy**, not the untrained LLM baseline. The table above compares the same Qwen2.5-7B model before training, after SFT warm-start, and after GRPO.
+
+## Training Evidence
+
+### Before / After / Generalization Scores
+
+![Before vs After Scores](https://huggingface.co/aparnasingha400/canary-7b-job-output-v2/resolve/main/evidence/before_after_scores.png)
+
+This plot compares model performance before training, after SFT, after GRPO, and on generalization/stress evaluations.
+
+### GRPO Reward Curve
+
+![Reward Curve](https://huggingface.co/aparnasingha400/canary-7b-job-output-v2/resolve/main/evidence/reward_curve.png)
+
+This plot shows verifier-backed environment reward during GRPO.
+
+### GRPO Loss Curve
+
+![Loss Curve](https://huggingface.co/aparnasingha400/canary-7b-job-output-v2/resolve/main/evidence/loss_curve.png)
+
+This plot shows the training loss from the final GRPO run.
+
+### Per-Task Reward During GRPO
+
+![Per Task Reward](https://huggingface.co/aparnasingha400/canary-7b-job-output-v2/resolve/main/evidence/per_task_reward.png)
+
+This plot helps verify that reward behavior is not isolated to one easy task family.
+
+### Action Distribution During RL
+
+![Action Distribution](https://huggingface.co/aparnasingha400/canary-7b-job-output-v2/resolve/main/evidence/action_distribution.png)
+
+The learned policy uses multiple rollout actions during training telemetry, including `increase_25`, `increase_10`, `rollback`, and `hold`.
+
+## What Changed After Training
+
+The raw 7B model initially scored poorly on several heldout tasks and struggled with reward-aligned rollout decisions. SFT warm-start stabilized the strict JSON action format and raised the average score from `0.3457` to `0.6105`. GRPO then improved the policy further to `0.6553` average on heldout evaluation.
+
+The most visible improvements were on `easy`, `medium`, `expert`, and `recovery`. `hard` decreased relative to the raw base model in this run, which is called out honestly because the final policy is improved overall but not perfect.
+
+## Reward Hacking / Robustness Notes
+
+The environment uses deterministic verifier scoring instead of a learned reward model. The reward is not a single keyword check: actions are scored against pre-action observations, hidden rollout states, breach timing, promotion safety, and structured diagnosis. This makes simple shortcut policies fail:
+
+- always rollback loses on phantom alerts and recovery tasks
+- always promote loses on drift and breach tasks
+- alert-only policies fail on phantom and silent scenarios
+- threshold-only policies miss warning windows and shared-noise cases
+
+The final training run reported `parse_ok_rate = 1.0` and `reward_error_rate = 0.0`, but the saved expert trace still shows some strict-JSON parse failures at trace time. This is documented as a limitation rather than hidden.
+
+## Reproduce Training
+
+Sanity run on Hugging Face Jobs:
+
+```bash
+hf jobs uv run --flavor a100-large --timeout 2h --secrets HF_TOKEN train_canary_rewritten_7b_hf_job.py --sanity-run
+```
+
+Full training run:
+
+```bash
+hf jobs uv run --flavor a100-large --timeout 6h --secrets HF_TOKEN -e OUTPUT_REPO_ID=aparnasingha400/canary-7b-job-output-v2 train_canary_rewritten_7b_hf_job.py
+```
+
+The public Colab notebook is also linked in the submission links above.
+
+## Known Training Limitations
+
+- This is a hackathon-scale training run, not a production deployment controller.
+- The final model improves strongly over the raw base model but remains below the strongest hand-coded reference policies.
+- The final policy still leans toward promotive actions, especially `increase_25` and `increase_10`.
+- Some trace-time generations can still fail strict JSON parsing despite perfect parser telemetry during RL.
+- Silent-task performance remains weaker than easy, medium, and recovery settings.
 
 ## Workspace Layout
 
@@ -383,7 +525,7 @@ The environment is configured for the standard Space runtime shape:
 
 This project is still an evaluation environment. A Space deployment should expose the benchmark surface, not behave like a production rollout controller.
 
-For final submission hygiene, see [SUBMISSION_CHECKLIST.md](/c:/Users/lekha/Downloads/canary_release_env/canary_release_env/SUBMISSION_CHECKLIST.md).
+For final submission hygiene, see the submission links and final training evidence sections at the top of this README.
 
 ## `inference.py`
 
